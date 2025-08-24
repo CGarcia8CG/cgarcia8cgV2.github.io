@@ -1,0 +1,319 @@
+:root{
+  --bg:#0b1020; --card:#141b2d; --text:#e5e7eb; --muted:#94a3b8;
+  --brand:#22d3ee; --accent:#a78bfa; --border:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui}
+a{color:inherit;text-decoration:none}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.nav{position:sticky;top:0;background:linear-gradient(180deg,var(--bg),rgba(11,16,32,.75));backdrop-filter:blur(8px);border-bottom:1px solid var(--border);z-index:10}
+.nav-inner{display:flex;justify-content:space-between;align-items:center;gap:16px}
+nav a{padding:8px 12px;border-radius:10px;color:var(--muted)}
+nav a:hover{background:var(--card);color:var(--text)}
+.brand{display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--brand);box-shadow:0 0 12px var(--brand)}
+.muted{color:var(--muted)}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:center;padding:48px 0}
+.hero h1{font-size:clamp(28px,4.2vw,44px);line-height:1.1;margin:10px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.02)}
+.cta{display:flex;gap:12px;margin-top:14px}
+.btn{padding:12px 16px;border-radius:14px;border:1px solid var(--border);background:var(--card);font-weight:600}
+.btn.primary{background:linear-gradient(135deg,var(--brand),var(--accent));border:none}
+.btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.hero-aside{display:flex;flex-direction:column;gap:12px}
+
+
+/* --- .avatar-wrap{position:relative;width:128px;height:128px}
+.avatar-img{position:absolute;inset:0;width:128px;height:128px;object-fit:cover;border-radius:20px;border:1px solid var(--border);display:none}
+.avatar{width:128px;height:128px;border-radius:20px;background:linear-gradient(135deg,var(--brand),var(--accent));display:flex;align-items:center;justify-content:center;color:#06111a;font-weight:900}
+.avatar-text{font-size:38px;} --- */
+:root{
+  --avatar-size: 260px;     /* ← cambia aquí: 160–220px según gusto */
+  --avatar-radius: 30px;    /* borde redondeado */
+}
+
+.avatar-wrap{
+  width:var(--avatar-size);
+  height:var(--avatar-size);
+}
+
+.avatar-img{
+  width:var(--avatar-size);
+  height:var(--avatar-size);
+  border-radius:var(--avatar-radius);
+}
+
+.avatar{
+  width:var(--avatar-size);
+  height:var(--avatar-size);
+  border-radius:var(--avatar-radius);
+  
+}
+
+/* Texto de fallback “CG” a escala del tamaño */
+.avatar-text{ font-size: calc(var(--avatar-size) * 0.30); }
+
+/* En móvil, que no se vuelva gigante */
+@media (max-width: 980px){
+  :root{ --avatar-size: 140px; }
+}
+
+
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kpi{background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:14px;padding:14px}
+.kpi .val{font-weight:800;font-size:22px}
+.notice{font-size:13px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1px solid var(--border);border-radius:18px;padding:0;overflow:hidden}
+.card-inner{padding:16px}
+.card h3{margin:0 0 8px}
+.card p{margin:0;color:var(--muted)}
+/* los \n dentro del <p class="desc"> se muestran como saltos */
+.card .desc { white-space: pre-line; }
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.tag{font-size:12px;border:1px solid var(--border);padding:6px 8px;border-radius:999px;color:var(--muted)}
+.links{display:flex;gap:10px;margin-top:10px}
+.pill{font-size:12px;padding:8px 10px;border-radius:999px;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.35);color:var(--brand)}
+.cover{width:100%;height:160px;object-fit:cover;display:block;border-bottom:1px solid var(--border)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.list{display:flex;flex-direction:column;gap:12px}
+.item{display:flex;justify-content:space-between;gap:16px;border:1px solid var(--border);border-radius:14px;padding:12px 14px;background:rgba(255,255,255,.02)}
+footer{border-top:1px solid var(--border);padding:28px 24px;color:var(--muted);text-align:center}
+@media (max-width:980px){
+  .hero{grid-template-columns:1fr}
+  .grid{grid-template-columns:1fr}
+  .row{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+}
+
+/* --- Tamaño global de los iconos de contacto --- */
+:root{
+  --contact-btn-size: 120px;   /* tamaño del botón/contendor */
+  --contact-ico-size: 100px;   /* tamaño del ícono dentro */
+  --cv-tile-size: 120px;  /* tamaño del cuadro */
+  --cv-icon-size: 100px;   /* tamaño del ícono */
+  --stack-tile-size: 100px;   /* tamaño del cuadro */
+  --stack-icon-size: 75px;   /* tamaño del icono dentro */
+}
+
+.socials{
+  display:flex;
+  gap:12px;
+  margin-top:8px;
+}
+
+/* Centrar los iconos dentro del contenedor */
+.socials{
+  width: 100%;
+  height:var(--contact-btn-size);
+  display: flex;
+  justify-content: center;   /* <-- centra horizontal */
+  align-items: center;       /* centra vertical dentro del alto del contenedor */
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;           /* opcional: centra también cuando hagan salto de línea */
+  
+}
+
+.social:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+  background:linear-gradient(135deg,var(--brand),var(--accent));
+}
+
+/* Tamaño uniforme del ícono (SVG o PNG) */
+.social img{
+  width:var(--contact-ico-size);
+  height:var(--contact-ico-size);
+  display:block;
+}
+
+
+.cv-tiles{
+  display:flex; justify-content:center; align-items:center;
+  gap:14px; margin-top:8px; flex-wrap:wrap;
+}
+
+.cv-tile{
+  width:var(--cv-tile-size); height:var(--cv-tile-size);
+  display:flex; align-items:center; justify-content:center;
+  border-radius:16px; border:1px solid var(--border); background:var(--card);
+  transition:transform .15s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.cv-tile:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+  background:linear-gradient(135deg,var(--brand),var(--accent));
+}
+
+.cv-tile img{
+  width:var(--cv-icon-size); height:var(--cv-icon-size); display:block;
+}
+
+
+.stack-icons{
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.stack-icon{
+  width: var(--stack-tile-size);
+  height: var(--stack-tile-size);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  margin: 0 auto;                    /* centra cada tile en su celda */
+  text-decoration: none;
+  transition: transform .15s ease, box-shadow .2s ease, background .2s ease;
+}
+
+.stack-icon:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  background: linear-gradient(135deg,var(--brand),var(--accent));
+}
+
+.stack-icon img{
+  width: var(--stack-icon-size);
+  height: var(--stack-icon-size);
+  object-fit: contain;
+  display: block;
+}
+
+.stack-label{
+  font-size: 11px;
+  color: var(--text);
+  opacity: .9;
+}
+
+
+/* Separación vertical uniforme entre secciones del main */
+main.container > section + section{
+  margin-top: 20px;   /* ajústalo: 16–28px según gusto */
+}
+
+/* Por si quieres un poquito extra entre filas de tarjetas (.row) contiguas */
+.row + .row{
+  margin-top: 20px;
+}
+
+/* En móvil: separación más compacta */
+@media (max-width:980px){
+  main.container > section + section,
+  .row + .row{ margin-top: 14px; }
+}
+
+
+/* Altura y padding extra solo para la fila de skills (izq=Stack, der=Certifications) */
+:root{
+  --info-card-min-h: 280px;   /* súbele/bájele aquí: 260–340px */
+}
+
+#skills .card{
+  min-height: var(--info-card-min-h);
+  padding: 12px;          /* estas dos tarjetas no usan .card-inner */
+  overflow: visible;      /* evita que se “corten” los iconos al final */
+}
+
+/* En móvil, un poco más compacto */
+@media (max-width:980px){
+  #skills .card{ min-height: 220px; }
+}
+
+
+/* ===== Proyectos más grandes ===== */
+:root{
+  --proj-cover-h: 360px;   /* alto de la imagen (antes ~160px) */
+  --proj-min-h:  440px;    /* alto mínimo de la tarjeta */
+  --proj-title:  18px;     /* tamaño del título dentro de la card */
+}
+
+#proyectos .grid{ gap: 20px; }                       /* más respiro */
+#proyectos .card{
+  min-height: var(--proj-min-h);
+  border-radius: 20px;
+}
+#proyectos .cover{
+  height: var(--proj-cover-h);
+}
+#proyectos .card-inner{ padding: 18px 18px 20px; }
+#proyectos .card h3{ font-size: var(--proj-title); }
+#proyectos .card:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(0,0,0,.35);
+}
+
+/* ==== Mapa de eventos (conferencias/publicaciones) ==== */
+.map{
+  height: 560px;                 /* ajusta el alto del mapa */
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0b1020;           /* color de fondo mientras carga */
+}
+
+/* Limpieza Leaflet */
+.leaflet-container{ background: transparent; }
+.leaflet-control-attribution{ font-size: 10px; }
+
+/* Popup compacto con imagen */
+.popup{
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+.popup img{
+  width: 44px; height: 44px;
+  border-radius: 8px; object-fit: cover;
+  border: 1px solid var(--border);
+}
+.popup h4{ margin: 0 0 2px; font-size: 14px; }
+.popup .meta{ font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+.popup a{ font-size: 12px; text-decoration: underline; }
+
+
+/* ==== Popup compacto sin imagen ==== */
+.leaflet-popup-content-wrapper{
+  background: rgba(11,16,32,.96);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+.leaflet-popup-tip{ background: rgba(11,16,32,.96); }
+
+.leaflet-popup-content{
+  margin: 8px 10px;              /* menos padding interno */
+}
+
+.evt-popup{ max-width: 220px; }  /* controla el ancho */
+.evt-popup h4{
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.evt-popup .meta{
+  margin: 0 0 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.evt-popup .desc{
+  margin: 0 0 6px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.evt-popup a{
+  font-size: 12px;
+  text-decoration: underline;
+}

@@ -1,0 +1,15 @@
+<!-- Python symbol (duotono) para temas oscuros -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Python">
+  <!-- Parte azul (superior-izquierda) -->
+  <rect x="6" y="6" width="34" height="26" rx="12" fill="#3776AB"></rect>
+  <path d="M28 19h11a7 7 0 0 1 7 7v3a6 6 0 0 1-6 6H24a10 10 0 0 1-10-10v-4a6 6 0 0 1 6-6h8v4z" fill="#3776AB"></path>
+  <circle cx="22" cy="16" r="2.2" fill="#ffffff"></circle>
+
+  <!-- Parte amarilla (inferior-derecha) -->
+  <rect x="24" y="32" width="34" height="26" rx="12" fill="#FFD43B"></rect>
+  <path d="M36 33h-11a7 7 0 0 1-7-7v-3a6 6 0 0 1 6-6h16a10 10 0 0 1 10 10v4a6 6 0 0 1-6 6h-8v-4z" fill="#FFD43B"></path>
+  <circle cx="42" cy="48" r="2.2" fill="#2a2a2a"></circle>
+
+  <!-- Borde suave para integrarlo con tu UI -->
+  <rect x="3.5" y="3.5" width="57" height="57" rx="14" fill="none" stroke="rgba(255,255,255,.08)"></rect>
+</svg>

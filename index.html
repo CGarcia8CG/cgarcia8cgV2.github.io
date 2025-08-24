@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!--
+    Portfolio modular para GitHub Pages
+    - HTML mínimo: estilos en assets/css/style.css
+    - Lógica en assets/js/*.js (ES Modules)
+    - Sustituye TU_USUARIO / TU_LINKEDIN / rutas del CV e imágenes en projects.js
+  -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Carlos García — Data Scientist</title>
+  <meta name="description" content="Portafolio de Ciencia de Datos: ML, Fairness, Geoespacial, Optimización y MLOps." />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <!-- <link rel="icon" href="assets/img/icons/favicon.svg" type="image/svg+xml"> -->
+
+  <!-- Leaflet (mapas) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <!-- Tu app -->
+  <script type="module" src="assets/js/main.js"></script>
+
+</head>
+<body>
+  <header class="nav">
+    <div class="container nav-inner">
+      <div class="brand">
+        <span class="dot" aria-hidden="true"></span>
+        <strong>Carlos García</strong><span class="muted"> / (Geo) Data Scientist / Teacher / </span>
+      </div>
+      <nav aria-label="Navegación principal">
+        <a href="#proyectos">Proyects</a>
+        <a href="#skills">Skills</a>
+        <a href="#experiencia">Experience</a>
+        <a href="#docencia">Teaching</a>
+        <a href="#contacto">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <div class="chips" id="chips"></div>
+        <h1>Hi, I'm Carlos — I like to...</h1>
+        <p class="muted">ML aplicado a educación, fairness, Geointelligence, Bayes.</p>
+        <div class="cta">
+          <a class="btn primary" href="#proyectos">View projects</a>
+          <a class="btn" href="https://github.com/CGarcia8CG" target="_blank" rel="noopener">GitHub</a>
+          <a class="btn" href="#cv">Curriculum</a>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <div class="avatar-wrap">
+          <img id="avatar-img" class="avatar-img" alt="Foto de perfil de Carlos" />
+          <div id="avatar-fallback" class="avatar avatar-text" aria-hidden="true">CG</div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><div class="val" id="kpi-stars">—</div><div class="lbl">GitHub Stars</div></div>
+          <div class="kpi"><div class="val">80%+</div><div class="lbl">AUC reinscripción</div></div>
+          <div class="kpi"><div class="val">4.5+ years</div><div class="lbl">Data Science experience</div></div>
+          <div class="kpi"><div class="val">3+ years</div><div class="lbl">Teaching experience</div></div>
+        </div>
+        <p class="notice">* Métricas ilustrativas. Sustituye por tus datos reales.</p>
+      </div>
+    </section>
+
+    <section id="proyectos" aria-labelledby="proyectos-title">
+      <h2 id="proyectos-title" style="text-align:center;">🚀 Featured projects</h2>
+      <div class="grid" id="projects-grid"></div>
+    </section>
+
+    <section id="skills" class="row">
+      <div class="card">
+        <h3 style="text-align:center;">Tech Stack</h3>
+        <!--<div class="tags" id="stack-tags"></div> -->
+        <div class="stack-icons" id="stack-icons"></div>
+      </div>
+      <div class="card">
+        <h3 style="text-align:center;">Certifications</h3>
+        <!--<ul class="list" id="problem-list"></ul> -->
+        <div class="stack-icons" id="cert-icons"></div>
+      </div>
+    </section>
+
+    <section id="experiencia" class="row">
+      <div class="card">
+        <h3 style="text-align:center;">Work Experience</h3>
+        <div class="list" id="exp-list"></div>
+      </div>
+      <div id="docencia" class="card">
+        <h3 style="text-align:center;">Conferences, Publications and Awards</h3>
+        <!--<div class="list" id="teach-list"></div>-->
+        <div id="events-map" class="map"></div>
+      </div>
+    </section>
+
+    <section id="cv" class="row">
+      <div class="card">
+        <h3 style="text-align:center;">CV</h3>
+
+        <div class="cv-tiles">
+          <a class="cv-tile" href="assets/cv/Carlos_Garcia_ES2025.pdf" target="_blank" rel="noopener" download aria-label="Descargar CV en Español">
+            <img src="assets/img/icons/CV_ESP.svg" alt="CV en Español" />
+          </a>
+          <a class="cv-tile" href="assets/cv/Carlos_Garcia_EN2025.pdf" target="_blank" rel="noopener" download aria-label="Download CV in English">
+            <img src="assets/img/icons/CV_ENG.svg" alt="CV in English" />
+          </a>
+        </div>
+      </div>
+
+      <div id="contacto" class="card">
+        <h3 style="text-align:center;">Contact</h3>
+
+        <div class="socials">
+          <a class="social" href="mailto:carlos.garcia.economomist@gmail.com" aria-label="Enviar correo">
+            <img src="assets/img/icons/Correo.svg" alt="" />
+          </a>
+          <a class="social" href="https://www.linkedin.com/in/cgarcia8cg/" target="_blank" rel="noopener" aria-label="LinkedIn">
+            <img src="assets/img/icons/Linkedin.svg" alt="" />
+          </a>
+          <a class="social" href="https://github.com/CGarcia8CG" target="_blank" rel="noopener" aria-label="GitHub">
+            <img src="assets/img/icons/GitHub.svg" alt="" />
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>© <span id="year"></span> Carlos García — Made with HTML/CSS/JS.</footer>
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

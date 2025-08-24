@@ -1,0 +1,18 @@
+<!-- CV English -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img">
+  <title>CV English</title>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22d3ee"></stop><stop offset="1" stop-color="#a78bfa"></stop>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="#0f172a"></rect>
+  <rect x="12" y="10" width="30" height="42" rx="6" fill="#0b1020" stroke="#94a3b8" stroke-width="1.6"></rect>
+  <path d="M27 10v10h15" fill="none" stroke="#94a3b8" stroke-width="1.6"></path>
+  <rect x="15" y="28" width="24" height="1.8" fill="#94a3b8"></rect>
+  <rect x="15" y="34" width="24" height="1.8" fill="#94a3b8"></rect>
+  <rect x="15" y="40" width="16" height="1.8" fill="#94a3b8"></rect>
+  <circle cx="44.5" cy="18.5" r="8.2" fill="url(#g)" opacity=".95"></circle>
+  <text x="44.5" y="21" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="8" font-weight="800" fill="#06111a">CV</text>
+  <text x="32" y="58" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="9" font-weight="800" fill="#e5e7eb" letter-spacing="1.2">ENG</text>
+</svg>
