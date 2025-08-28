@@ -27,7 +27,7 @@ export const PROJECTS = [
     desc: `In this project we look how different definitions of clustering have influence in the creation of
     routes origin from a dairy factory to supply various points of sale\n
     If we have the cost of transportation we can compute the economical cost of each cluster.`,
-    tags: ["Python","GeoPandas","Clustering","OSM"],
+    tags: ["Python","GeoPandas","Clustering","OSM","Logistics"],
     //github: "https://github.com/tu_usuario/movilidad-cdmx",
     demo: "https://colab.research.google.com/drive/1G-oVTf0_U_Hma32jCjN0UffjCD7cNNWv#scrollTo=ZnLk_Y-_w3fB://crime-geo-clustering-dc7ryzj9cdgjjej7aethss.streamlit.app/",
     image: "assets/img/proj/Routing-clustering.png"
