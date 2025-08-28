@@ -16,7 +16,7 @@ export const PROJECTS = [
     title: "Comparison between cluster and regionalization",
     desc: `In this project we use real crime data of Mexico to demonstrate why \n
      Regionalization is a special case of Clustering and the value of using the former approach\n
-     ...`,
+     You can navigate it both at the same time`,
     tags: ["Python","Streamlit","Clustering","Folium"],
     github: "https://github.com/CGarcia8CG/crime-geo-clustering/tree/master",
     demo: "https://crime-geo-clustering-dc7ryzj9cdgjjej7aethss.streamlit.app/",
@@ -24,7 +24,9 @@ export const PROJECTS = [
   },
   {
     title: "Comparison of clustering in transport routing",
-    desc: "Mapa interactivo con modelo gravitacional y heatmap de destinos.",
+    desc: `In this project we look how different definitions of clustering have influence in the creation of
+    routes origin from a dairy factory to supply various points of sale\n
+    If we have the cost of transportation we can compute the economical cost of each cluster.`,
     tags: ["Python","GeoPandas","Clustering","OSM"],
     //github: "https://github.com/tu_usuario/movilidad-cdmx",
     demo: "https://colab.research.google.com/drive/1G-oVTf0_U_Hma32jCjN0UffjCD7cNNWv#scrollTo=ZnLk_Y-_w3fB://crime-geo-clustering-dc7ryzj9cdgjjej7aethss.streamlit.app/",
@@ -151,10 +153,10 @@ export const EVENTS_MAP = [
   {
     type: "conference",                    // "conference" | "publication"
     title: "SACSCOC 2024 — New Orleans",
-    desc: "Sistema de alertas tempranas del Tec de Monterrey.",
+    desc: "Two days invitation to present Tec de Monterrey early alerts system used to identify potential churning students.",
     date: "Jul-2024",
-    lat: 29.9511,                          // Nueva Orleans (aprox)
-    lng: -90.0715,
+    lat: 29.9478943,                          // Nueva Orleans (aprox)
+    lng: -90.0720366,
     link: null,                            // sin enlace
     //photo: "assets/img/icons/favicon.svg"  // placeholder
   },
@@ -170,8 +172,8 @@ export const EVENTS_MAP = [
   },
   {
     type: "conference",                    // "conference" | "publication"
-    title: "Kick-off 2025-2026",
-    desc: "Kick Off del Tec de Monterrey.",
+    title: "Kick-off 2026",
+    desc: "Tec de Monterrey meeting to present the new admissions-enrollment algorithm",
     date: "Sep-2025",
     lat: 19.5932625,                          // Nueva Orleans (aprox)
     lng: -99.2317306,
@@ -193,7 +195,7 @@ export const EVENTS_MAP = [
   {
     type: "award",
     title: "Tec Awards 2025",
-    desc: "Award for innovation in key process (scolarship and enrollmente)",
+    desc: "Award for innovation in key institutional processes (scolarships and enrollment)",
     date: "Aug-2025",
     lat: 25.6513835,                           // Rectoria ITESM (aprox)
     lng: -100.2912695,
