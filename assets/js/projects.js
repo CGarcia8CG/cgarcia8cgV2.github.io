@@ -175,7 +175,7 @@ export const EVENTS_MAP = [
     title: "Kick-off 2026",
     desc: "Tec de Monterrey meeting to present the new admissions-enrollment algorithm",
     date: "Sep-2025",
-    lat: 19.5932625,                          // Nueva Orleans (aprox)
+    lat: 19.5932625,                          // CEM
     lng: -99.2317306,
     link: null,                            // sin enlace
     //photo: "assets/img/icons/favicon.svg"  // placeholder
@@ -206,7 +206,7 @@ export const EVENTS_MAP = [
 
 
 
-export const CHIPS = ["Data Science","Applied ML","Fairness","Geointelligence","Bayesian Stats","Economics"];
+export const CHIPS = ["Data Science","Applied ML","Fairness","Geointelligence","Bayesian Stats","Economics", "Visualization"];
 export const PROBLEMS = [
   {text: "Predicción de reinscripción/admisión", small: "ML aplicado a educación"},
   {text: "Asignación y optimización de recursos", small: "Algoritmos genéticos"},
