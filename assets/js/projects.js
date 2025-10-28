@@ -142,7 +142,7 @@ export const STACK_ICONS = [
 // Certificaciones con imagen y link a la credencial (opcional)
 export const CERTS = [
   // Ejemplos (cámbialos por los tuyos)
-  { label: "Neo4j Professional", src: "assets/img/certs/neo4j_certified_professional.png", href: "https://graphacademy.neo4j.com/c/e00e16dc-af55-405d-a451-4e4d497a48e7/" },
+  { label: "Neo4j Professional", src: "assets/img/stack/Neo4j_logo.png", href: "https://graphacademy.neo4j.com/c/e00e16dc-af55-405d-a451-4e4d497a48e7/" },
   { label: "AZ-900", src: "assets/img/certs/AZ_fundamentals.png", href: "https://learn.microsoft.com/en-us/users/carlosdavidgarciahernandez-5086/credentials/de7241a9318bf576?ref=https%3A%2F%2Fcgarcia8cg.github.io%2F://www.credly.com/..." },
   { label: "AZ-DP100", src: "assets/img/certs/AZ_DS.png", href: "https://learn.microsoft.com/en-us/users/carlosdavidgarciahernandez-5086/credentials/6ed38074f499249a?ref=https%3A%2F%2Fcgarcia8cg.github.io%2F" },
   { label: "Tiger-Associate", src: "assets/img/certs/TigerGraph_associate.png", href: "https://www.credly.com/badges/79b644b0-c15f-4449-89a3-4408815865c7/public_url" },
