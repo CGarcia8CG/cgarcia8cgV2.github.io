@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Módulo 2 · Cartografía Temática Socioeconómica</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <style>
+    /* ─── RESET & BASE ─────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --morado:   #6d28d9;
+      --morado-c: #a78bfa;
+      --teal:     #0d9488;
+      --teal-c:   #2dd4bf;
+      --oro:      #f59e0b;
+      --rojo:     #ef4444;
+      --verde:    #22c55e;
+      --fondo:    #0d1117;
+      --fondo2:   #161b22;
+      --fondo3:   #1c2230;
+      --texto:    #e6edf3;
+      --sub:      #8b949e;
+      --borde:    #30363d;
+      --r:        12px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--fondo); color: var(--texto); line-height: 1.65; overflow-x: hidden; }
+
+    /* ─── PROGRESS ─────────────────────────────────── */
+    #progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--morado-c), var(--teal-c)); z-index: 200; transition: width .1s; }
+
+    /* ─── NAV ───────────────────────────────────────── */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(13,17,23,.88); backdrop-filter: blur(14px); border-bottom: 1px solid var(--borde); display: flex; align-items: center; justify-content: space-between; padding: .75rem 2rem; }
+    .nav-brand { font-size: .85rem; font-weight: 700; color: var(--morado-c); letter-spacing: .04em; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { font-size: .82rem; color: var(--sub); text-decoration: none; transition: color .2s; }
+    .nav-links a:hover { color: var(--texto); }
+    @media (max-width: 580px) { .nav-links { display: none; } }
+
+    /* ─── HERO ──────────────────────────────────────── */
+    .hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3rem 2rem; overflow: hidden; }
+    .hero-canvas { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; display: block; }
+    .hero-content { position: relative; z-index: 1; max-width: 860px; }
+
+    .badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(109,40,217,.25); border: 1px solid rgba(167,139,250,.35); border-radius: 999px; padding: .35rem 1rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--morado-c); margin-bottom: 1.5rem; opacity: 0; animation: fadeUp .6s .2s forwards; }
+    h1 { font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 800; line-height: 1.1; background: linear-gradient(135deg, #fff 30%, var(--morado-c) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; opacity: 0; animation: fadeUp .7s .35s forwards; }
+    .hero-sub { margin-top: 1.2rem; font-size: 1.15rem; color: var(--sub); max-width: 600px; margin-inline: auto; opacity: 0; animation: fadeUp .7s .5s forwards; }
+    .hero-chips { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; margin-top: 2rem; opacity: 0; animation: fadeUp .7s .65s forwards; }
+    .chip { display: flex; align-items: center; gap: .45rem; background: var(--fondo2); border: 1px solid var(--borde); border-radius: 999px; padding: .4rem 1rem; font-size: .85rem; }
+    .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-m  { background: var(--morado-c); }
+    .dot-t  { background: var(--teal-c); }
+    .dot-o  { background: var(--oro); }
+
+    .scroll-hint { position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: .5rem; color: var(--sub); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; opacity: 0; animation: fadeUp .7s 1.2s forwards; }
+    .scroll-arrow { width: 24px; height: 24px; border-right: 2px solid var(--sub); border-bottom: 2px solid var(--sub); transform: rotate(45deg); animation: bounce 1.5s infinite; }
+
+    /* ─── SECTIONS ──────────────────────────────────── */
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1060px; margin-inline: auto; }
+    .section-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .12em; color: var(--morado-c); font-weight: 600; margin-bottom: .75rem; }
+    .section-title { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 700; line-height: 1.2; margin-bottom: 1rem; }
+    .section-desc { color: var(--sub); max-width: 680px; font-size: 1.05rem; }
+    .divider { border: none; border-top: 1px solid var(--borde); margin: 0; }
+
+    /* ─── OBJETIVO ──────────────────────────────────── */
+    .objetivo-box { background: linear-gradient(135deg, rgba(109,40,217,.12), rgba(13,148,136,.1)); border: 1px solid rgba(167,139,250,.22); border-radius: var(--r); padding: 2.5rem; position: relative; overflow: hidden; }
+    .objetivo-box::before { content: ''; position: absolute; top: -60px; left: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(167,139,250,.1), transparent 70%); }
+    .objetivo-icon { width: 52px; height: 52px; background: linear-gradient(135deg, var(--morado), var(--morado-c)); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; font-size: 1.5rem; }
+    .objetivo-box p { font-size: 1.1rem; line-height: 1.75; position: relative; z-index: 1; }
+    .objetivo-box strong { color: var(--morado-c); }
+
+    /* ─── CONCEPTOS ─────────────────────────────────── */
+    #conceptos { background: var(--fondo2); }
+    .conceptos-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 3rem; }
+    .concepto-card { background: var(--fondo3); border: 1px solid var(--borde); border-radius: var(--r); padding: 1.75rem; position: relative; overflow: hidden; cursor: default; transition: transform .25s, border-color .25s, box-shadow .25s; }
+    .concepto-card:hover { transform: translateY(-4px); border-color: var(--morado-c); box-shadow: 0 8px 32px rgba(109,40,217,.18); }
+    .concepto-card::after { content: ''; position: absolute; bottom: 0; left: 0; height: 3px; width: 100%; background: var(--gc, linear-gradient(90deg, var(--morado), var(--morado-c))); transform: scaleX(0); transform-origin: left; transition: transform .3s; }
+    .concepto-card:hover::after { transform: scaleX(1); }
+    .concepto-num { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--sub); margin-bottom: .6rem; }
+    .concepto-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: .6rem; }
+    .concepto-card p { font-size: .9rem; color: var(--sub); line-height: 1.6; }
+    .concepto-emoji { font-size: 2rem; margin-bottom: .85rem; display: block; }
+
+    /* ─── CLASIFICACIÓN INTERACTIVA ─────────────────── */
+    #clasificacion { background: var(--fondo); }
+    .clas-tabs { display: flex; gap: .5rem; margin-top: 2rem; flex-wrap: wrap; }
+    .clas-btn { padding: .5rem 1.2rem; border-radius: 8px; border: 1px solid var(--borde); background: transparent; color: var(--sub); font-size: .88rem; cursor: pointer; transition: all .2s; }
+    .clas-btn.active { background: var(--morado); border-color: var(--morado); color: #fff; }
+    .clas-btn:hover:not(.active) { border-color: var(--morado-c); color: var(--morado-c); }
+    .clas-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; align-items: start; }
+    @media (max-width: 700px) { .clas-wrap { grid-template-columns: 1fr; } }
+    #clas-chart-box { background: var(--fondo2); border: 1px solid var(--borde); border-radius: var(--r); padding: 1.5rem; min-height: 300px; position: relative; }
+    #clas-chart-box svg { display: block; }
+    .clas-info { background: var(--fondo2); border: 1px solid var(--borde); border-radius: var(--r); padding: 1.5rem; }
+    .clas-info h4 { font-size: 1rem; font-weight: 700; margin-bottom: .75rem; }
+    .clas-info p { font-size: .9rem; color: var(--sub); line-height: 1.65; margin-bottom: .75rem; }
+    .clas-pros, .clas-cons { font-size: .85rem; padding: .6rem 1rem; border-radius: 8px; margin-top: .5rem; }
+    .clas-pros { background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.2); color: #4ade80; }
+    .clas-cons { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); color: #f87171; }
+    .breaks-list { list-style: none; margin-top: 1rem; }
+    .break-item { display: flex; align-items: center; gap: .75rem; padding: .4rem 0; font-size: .85rem; color: var(--sub); border-bottom: 1px solid var(--borde); }
+    .break-item:last-child { border: none; }
+    .break-swatch { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; }
+    .break-item strong { color: var(--texto); }
+
+    /* ─── TIMELINE ──────────────────────────────────── */
+    #sesion { background: var(--fondo2); }
+    .timeline { margin-top: 3rem; position: relative; }
+    .timeline::before { content: ''; position: absolute; left: 28px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, var(--morado-c), var(--teal-c)); }
+    .tl-item { display: flex; gap: 1.5rem; margin-bottom: 2.5rem; position: relative; }
+    .tl-dot { width: 58px; height: 58px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.3rem; border: 2px solid var(--borde); background: var(--fondo2); position: relative; z-index: 1; transition: border-color .25s, background .25s; }
+    .tl-item:hover .tl-dot { border-color: var(--morado-c); background: rgba(109,40,217,.12); }
+    .tl-body { flex: 1; background: var(--fondo3); border: 1px solid var(--borde); border-radius: var(--r); padding: 1.25rem 1.5rem; transition: border-color .25s; }
+    .tl-item:hover .tl-body { border-color: var(--morado-c); }
+    .tl-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: .35rem; }
+    .tl-body p  { font-size: .9rem; color: var(--sub); }
+    .tl-tag { display: inline-block; font-size: .72rem; background: rgba(109,40,217,.15); color: var(--morado-c); border-radius: 4px; padding: .15rem .5rem; margin-bottom: .5rem; }
+
+    /* ─── ENTREGABLE ────────────────────────────────── */
+    #entregable { background: var(--fondo); }
+    .entregable-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3rem; align-items: start; }
+    @media (max-width: 760px) { .entregable-wrap { grid-template-columns: 1fr; } }
+
+    .mapa-preview { border-radius: var(--r); overflow: hidden; position: relative; border: 1px solid var(--borde); background: #0d1520; min-height: 340px; }
+    .mapa-preview svg { display: block; width: 100%; height: 100%; }
+    #map-tooltip { position: absolute; background: rgba(13,17,23,.95); border: 1px solid var(--borde); border-radius: 8px; padding: .55rem .9rem; font-size: .82rem; pointer-events: none; opacity: 0; transition: opacity .15s; z-index: 20; max-width: 200px; backdrop-filter: blur(6px); }
+    #map-tooltip strong { display: block; margin-bottom: .2rem; font-size: .85rem; }
+    #map-tooltip .tt-val { color: var(--morado-c); font-weight: 600; }
+    #map-tooltip .tt-grado { font-size: .78rem; margin-top: .15rem; }
+    .map-loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; color: var(--sub); font-size: .88rem; }
+    .map-spinner { width: 28px; height: 28px; border: 3px solid var(--borde); border-top-color: var(--morado-c); border-radius: 50%; animation: spin .8s linear infinite; }
+    .map-legend { position: absolute; bottom: 10px; left: 10px; background: rgba(13,17,23,.88); border: 1px solid var(--borde); border-radius: 8px; padding: .6rem .85rem; font-size: .72rem; backdrop-filter: blur(4px); }
+    .map-legend-title { color: var(--sub); margin-bottom: .45rem; letter-spacing: .05em; text-transform: uppercase; font-size: .68rem; }
+    .legend-row { display: flex; align-items: center; gap: .45rem; margin-bottom: .3rem; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+    .map-source { position: absolute; bottom: 10px; right: 10px; font-size: .65rem; color: var(--sub); background: rgba(13,17,23,.75); padding: .25rem .5rem; border-radius: 4px; }
+    .map-error { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; color: var(--sub); font-size: .85rem; text-align: center; padding: 1rem; }
+
+    .entregable-info h3 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.3; }
+    .entregable-tags { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.25rem; }
+    .etag { font-size: .8rem; padding: .3rem .8rem; border-radius: 6px; border: 1px solid var(--borde); color: var(--sub); }
+    .etag.m  { border-color: var(--morado); color: var(--morado-c); background: rgba(109,40,217,.1); }
+    .etag.t  { border-color: var(--teal);   color: var(--teal-c);   background: rgba(13,148,136,.1); }
+    .etag.o  { border-color: var(--oro);    color: var(--oro);      background: rgba(245,158,11,.1); }
+    .criterio-box { background: var(--fondo3); border: 1px solid var(--borde); border-left: 3px solid var(--teal-c); border-radius: var(--r); padding: 1.25rem 1.5rem; margin-top: 1.5rem; }
+    .criterio-box p { font-size: .9rem; color: var(--sub); line-height: 1.65; }
+    .stat-row { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1.25rem; }
+    .stat-box { flex: 1; min-width: 100px; background: var(--fondo3); border: 1px solid var(--borde); border-radius: 10px; padding: .85rem 1rem; text-align: center; }
+    .stat-box .stat-val { font-size: 1.15rem; font-weight: 800; color: var(--morado-c); }
+    .stat-box .stat-lbl { font-size: .72rem; color: var(--sub); margin-top: .2rem; }
+
+    /* ─── BIBLIOGRAFÍA ──────────────────────────────── */
+    #biblio { background: var(--fondo2); }
+    .biblio-tabs { display: flex; gap: .5rem; margin-top: 2.5rem; margin-bottom: 1.5rem; }
+    .tab-btn { padding: .5rem 1.2rem; border-radius: 8px; border: 1px solid var(--borde); background: transparent; color: var(--sub); font-size: .88rem; cursor: pointer; transition: all .2s; }
+    .tab-btn.active, .tab-btn:hover { background: var(--morado); border-color: var(--morado); color: #fff; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .ref-list { list-style: none; }
+    .ref-item { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--borde); align-items: flex-start; transition: padding-left .2s; }
+    .ref-item:hover { padding-left: .5rem; }
+    .ref-item:last-child { border-bottom: none; }
+    .ref-icon { width: 38px; height: 38px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .ref-icon.teo { background: rgba(109,40,217,.15); }
+    .ref-icon.tec { background: rgba(13,148,136,.15); }
+    .ref-body { flex: 1; }
+    .ref-body strong { font-size: .95rem; display: block; margin-bottom: .2rem; }
+    .ref-body span { font-size: .83rem; color: var(--sub); }
+
+    /* ─── HERRAMIENTAS ──────────────────────────────── */
+    .tools-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 2.5rem; }
+    .tool-card { display: flex; align-items: center; gap: .85rem; background: var(--fondo2); border: 1px solid var(--borde); border-radius: var(--r); padding: 1rem 1.4rem; transition: border-color .25s, transform .2s; flex: 1; min-width: 200px; }
+    .tool-card:hover { border-color: var(--teal-c); transform: translateY(-3px); }
+    .tool-icon { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg, var(--teal), var(--teal-c)); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+    .tool-info strong { display: block; font-size: .95rem; }
+    .tool-info span { font-size: .82rem; color: var(--sub); }
+
+    /* ─── FOOTER ─────────────────────────────────────── */
+    footer { background: var(--fondo2); border-top: 1px solid var(--borde); padding: 2.5rem 2rem; text-align: center; color: var(--sub); font-size: .85rem; }
+    footer strong { color: var(--texto); }
+
+    /* ─── REVEAL ─────────────────────────────────────── */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .6s, transform .6s; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ─── KEYFRAMES ──────────────────────────────────── */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes bounce { 0%,100% { transform:rotate(45deg) translateY(0); } 50% { transform:rotate(45deg) translateY(6px); } }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div id="progress"></div>
+
+  <nav>
+    <span class="nav-brand">M2 · Cartografía Temática</span>
+    <ul class="nav-links">
+      <li><a href="#objetivo">Objetivo</a></li>
+      <li><a href="#conceptos">Conceptos</a></li>
+      <li><a href="#clasificacion">Clasificación</a></li>
+      <li><a href="#sesion">Sesión</a></li>
+      <li><a href="#entregable">Entregable</a></li>
+      <li><a href="#biblio">Bibliografía</a></li>
+    </ul>
+  </nav>
+
+  <!-- ── HERO ── -->
+  <section class="hero">
+    <canvas class="hero-canvas" id="heroCanvas"></canvas>
+    <div class="hero-content">
+      <div class="badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-14 2 0 0-1 2 3 3-1 0-1 2 0 3"/></svg>
+        Módulo 2 de 4 · Curso DGAPA 2026
+      </div>
+      <h1>Cartografía Temática<br>Socioeconómica</h1>
+      <p class="hero-sub">Convierte tablas de datos en mapas que revelan desigualdad, marginación y patrones territoriales del desarrollo regional.</p>
+      <div class="hero-chips">
+        <span class="chip"><span class="chip-dot dot-m"></span> 6 horas</span>
+        <span class="chip"><span class="chip-dot dot-t"></span> Join tabular · Simbología graduada</span>
+        <span class="chip"><span class="chip-dot dot-o"></span> Clasificación Jenks · ColorBrewer</span>
+        <span class="chip"><span class="chip-dot dot-m"></span> Datos CONAPO 2020</span>
+      </div>
+    </div>
+    <div class="scroll-hint">Explorar <div class="scroll-arrow"></div></div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── OBJETIVO ── -->
+  <section id="objetivo">
+    <div class="container">
+      <p class="section-label reveal">Propósito del módulo</p>
+      <h2 class="section-title reveal">¿Qué vas a lograr?</h2>
+      <div class="objetivo-box reveal" style="margin-top:2rem;">
+        <div class="objetivo-icon">🗺️</div>
+        <p>
+          Que el participante sea capaz de <strong>vincular datos estadísticos socioeconómicos con capas geográficas</strong>,
+          construir <strong>cartografía temática de calidad profesional</strong>
+          e interpretar <strong>patrones espaciales de desigualdad y desarrollo regional</strong>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── CONCEPTOS ── -->
+  <section id="conceptos">
+    <div class="container">
+      <p class="section-label reveal">Lo que necesitas saber</p>
+      <h2 class="section-title reveal">Conceptos clave</h2>
+      <p class="section-desc reveal">Los pilares que transforman una hoja de cálculo en un mapa que comunica.</p>
+
+      <div class="conceptos-grid">
+        <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#6d28d9,#a78bfa)">
+          <span class="concepto-emoji">🔗</span>
+          <p class="concepto-num">Concepto 01</p>
+          <h3>Join tabular (unión por CVEGEO)</h3>
+          <p>Proceso de vincular una tabla de Excel (con estadísticas) a una capa vectorial usando una clave única. En México, la clave CVEGEO del INEGI identifica estados, municipios y localidades.</p>
+        </div>
+        <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#0d9488,#2dd4bf)">
+          <span class="concepto-emoji">🎨</span>
+          <p class="concepto-num">Concepto 02</p>
+          <h3>Simbología graduada</h3>
+          <p>Representación visual donde el color (o tamaño) de cada polígono varía según el valor de una variable. Permite ver de un vistazo qué zonas tienen mayor o menor marginación, PIB o acceso a servicios.</p>
+        </div>
+        <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#f59e0b,#fcd34d)">
+          <span class="concepto-emoji">📊</span>
+          <p class="concepto-num">Concepto 03</p>
+          <h3>Clasificación estadística</h3>
+          <p>Método para agrupar los valores continuos en clases discretas. Los tres más comunes son: Natural Breaks (Jenks), Cuantiles e Intervalos Iguales. Cada uno cuenta una historia diferente del mismo dato.</p>
+        </div>
+        <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#ec4899,#f9a8d4)">
+          <span class="concepto-emoji">🌈</span>
+          <p class="concepto-num">Concepto 04</p>
+          <h3>ColorBrewer y paletas cartográficas</h3>
+          <p>Paletas de color diseñadas científicamente para cartografía, accesibles para personas con daltonismo. Secuenciales para una variable, divergentes para comparaciones alrededor de un punto central.</p>
+        </div>
+        <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#14b8a6,#5eead4)">
+          <span class="concepto-emoji">🏛️</span>
+          <p class="concepto-num">Concepto 05</p>
+          <h3>Índice de Marginación CONAPO</h3>
+          <p>Indicador compuesto que sintetiza carencias en educación, vivienda, distribución de población e ingresos. Disponible a escala estatal, municipal y localidad. Es la variable estrella de este módulo.</p>
+        </div>
+        <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#8b5cf6,#c4b5fd)">
+          <span class="concepto-emoji">🔍</span>
+          <p class="concepto-num">Concepto 06</p>
+          <h3>Interpretación espacial</h3>
+          <p>Leer el mapa más allá de los colores: ¿hay clustering geográfico? ¿Regiones contiguas con valores similares? La cartografía temática es el primer paso hacia el análisis espacial formal (Módulo 4).</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── CLASIFICACIÓN INTERACTIVA ── -->
+  <section id="clasificacion">
+    <div class="container">
+      <p class="section-label reveal">Interactivo</p>
+      <h2 class="section-title reveal">¿Cómo afecta el método de clasificación?</h2>
+      <p class="section-desc reveal">El mismo dato, tres métodos distintos. Selecciona cada uno para ver cómo cambian las clases y qué historia cuenta el mapa.</p>
+
+      <div class="clas-tabs reveal">
+        <button class="clas-btn active" onclick="setClas('jenks', this)">Natural Breaks (Jenks)</button>
+        <button class="clas-btn" onclick="setClas('quantile', this)">Cuantiles</button>
+        <button class="clas-btn" onclick="setClas('equal', this)">Intervalos Iguales</button>
+      </div>
+
+      <div class="clas-wrap">
+        <div id="clas-chart-box" class="reveal">
+          <svg id="clas-chart" width="100%"></svg>
+        </div>
+        <div class="clas-info reveal">
+          <h4 id="clas-title">Natural Breaks (Jenks)</h4>
+          <p id="clas-desc">Minimiza la varianza dentro de cada clase y maximiza las diferencias entre clases. Los límites se colocan donde existen "saltos naturales" en los datos.</p>
+          <div class="clas-pros" id="clas-pros">✔ Refleja la estructura real de los datos · Ideal para distribuciones asimétricas</div>
+          <div class="clas-cons" id="clas-cons">✖ Difícil de comparar entre diferentes mapas</div>
+          <ul class="breaks-list" id="clas-breaks"></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── TIMELINE ── -->
+  <section id="sesion">
+    <div class="container">
+      <p class="section-label reveal">Estructura de la sesión</p>
+      <h2 class="section-title reveal">¿Cómo está organizado el módulo?</h2>
+      <p class="section-desc reveal">6 horas distribuidas en dos sesiones. Al final tendrás tu primer mapa de desigualdad territorial.</p>
+
+      <div class="timeline reveal">
+        <div class="tl-item">
+          <div class="tl-dot">📚</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 1 · Hora 1</span>
+            <h3>Desigualdad territorial y el Índice de Marginación</h3>
+            <p>¿Qué mide el índice CONAPO? Dimensiones del desarrollo humano (Sen 1999). Lectura e interpretación del reporte CONAPO 2020. Por qué importa la escala de análisis.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot">🔗</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 1 · Hora 2</span>
+            <h3>Join tabular: uniendo el Excel al shapefile</h3>
+            <p>Descarga y limpieza del shapefile municipal (MGN-INEGI). Descarga del Índice de Marginación CONAPO 2020. Join por CVEGEO en QGIS: propiedades de capa → Uniones.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot">🎨</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 1 · Hora 3</span>
+            <h3>Simbología graduada con 5 clases Jenks</h3>
+            <p>Capa → Propiedades → Simbología → Graduado. Columna: IM_2020. Clasificación: Natural Breaks (Jenks). 5 clases. Selección de paleta divergente ColorBrewer (RdYlGn).</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot">🌍</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 2 · Hora 4</span>
+            <h3>Atlas y paletas de color profesionales</h3>
+            <p>Introducción a colorbrewer2.org. Secuenciales vs divergentes vs cualitativas. Consideraciones de accesibilidad (daltonismo). Ajuste de etiquetas de leyenda para comunicar claramente.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot">🖼️</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 2 · Hora 5</span>
+            <h3>Compositor de impresión: layout profesional</h3>
+            <p>Creación de layout: lienzo carta/A4. Insertar mapa, leyenda completa, escala gráfica, norte, título y fuente. Ajuste de tamaño de fuentes para presentación académica.</p>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot">💬</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 2 · Hora 6</span>
+            <h3>Interpretación y discusión colectiva</h3>
+            <p>¿Qué nos dice el mapa? Identificación de regiones de alta marginación (sureste), clusters de baja marginación (norte y occidente). Conexión con la teoría de Boisier sobre desarrollo territorial heterodoxo.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── HERRAMIENTAS ── -->
+  <section style="padding: 4rem 2rem; background: var(--fondo);">
+    <div class="container">
+      <p class="section-label reveal">Software del módulo</p>
+      <h2 class="section-title reveal">Herramientas que usarás</h2>
+      <div class="tools-grid">
+        <div class="tool-card reveal">
+          <div class="tool-icon">🟢</div>
+          <div class="tool-info"><strong>QGIS 3.28 LTR</strong><span>Joins, simbología y compositor</span></div>
+        </div>
+        <div class="tool-card reveal">
+          <div class="tool-icon">📎</div>
+          <div class="tool-info"><strong>Joins tabulares</strong><span>Vinculación de tablas por CVEGEO</span></div>
+        </div>
+        <div class="tool-card reveal">
+          <div class="tool-icon">🌈</div>
+          <div class="tool-info"><strong>ColorBrewer</strong><span>colorbrewer2.org · Paletas cartográficas</span></div>
+        </div>
+        <div class="tool-card reveal">
+          <div class="tool-icon">🏛️</div>
+          <div class="tool-info"><strong>CONAPO 2020</strong><span>Índice de Marginación municipal</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── ENTREGABLE ── -->
+  <section id="entregable" style="background: var(--fondo2);">
+    <div class="container">
+      <p class="section-label reveal">Producto esperado</p>
+      <h2 class="section-title reveal">Tu entregable del módulo</h2>
+
+      <div class="entregable-wrap">
+        <div class="mapa-preview reveal" id="mapa-container">
+          <div class="map-loading" id="map-loading"><div class="map-spinner"></div>Cargando mapa municipal…</div>
+          <div class="map-error" id="map-error">⚠️ No se pudo cargar el mapa.<br>Verifica tu conexión a internet.</div>
+          <svg id="mexico-map"></svg>
+          <div id="map-tooltip">
+            <strong id="tt-name"></strong>
+            <div class="tt-val" id="tt-val"></div>
+            <div class="tt-grado" id="tt-grado"></div>
+          </div>
+          <div class="map-legend" id="map-legend" style="display:none;">
+            <div class="map-legend-title">Marginación 2020</div>
+          </div>
+          <div class="map-source">Fuente: CONAPO · Índice de Marginación 2020</div>
+        </div>
+
+        <div class="entregable-info reveal">
+          <h3>Mapa de marginación municipal con 5 clases Jenks y leyenda completa</h3>
+          <p style="color:var(--sub); font-size:.93rem; line-height:1.7;">
+            Tu entregable mostrará los 2,471 municipios de México clasificados por su grado de marginación.
+            El patrón espacial es claro: el sureste concentra la mayor marginalidad, mientras el norte
+            y el Bajío presentan los valores más bajos. Pasa el cursor por los estados para explorar.
+          </p>
+
+          <div class="stat-row">
+            <div class="stat-box"><div class="stat-val">2,471</div><div class="stat-lbl">Municipios</div></div>
+            <div class="stat-box"><div class="stat-val">5</div><div class="stat-lbl">Clases Jenks</div></div>
+            <div class="stat-box"><div class="stat-val">RdYlGn</div><div class="stat-lbl">Paleta ColorBrewer</div></div>
+          </div>
+
+          <div class="entregable-tags">
+            <span class="etag m">5 clases Jenks</span>
+            <span class="etag t">Escala municipal</span>
+            <span class="etag o">Layout completo</span>
+            <span class="etag">Leyenda con etiquetas</span>
+            <span class="etag">Escala gráfica</span>
+            <span class="etag">Fuente CONAPO</span>
+          </div>
+          <div class="criterio-box">
+            <p><strong style="color:var(--teal-c)">Criterio de evaluación:</strong><br>
+            Construir mapas coropléticos con simbología graduada, leyenda, escala y fuente, aplicando criterios de clasificación estadística (Jenks, cuantiles) y paletas de color adecuadas a la variable representada.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ── BIBLIOGRAFÍA ── -->
+  <section id="biblio">
+    <div class="container">
+      <p class="section-label reveal">Lecturas del módulo</p>
+      <h2 class="section-title reveal">Bibliografía</h2>
+      <div class="biblio-tabs reveal">
+        <button class="tab-btn active" onclick="switchTab('consultada', this)">Consultada</button>
+        <button class="tab-btn" onclick="switchTab('sugerida', this)">Sugerida</button>
+      </div>
+
+      <div id="consultada" class="tab-panel active">
+        <ul class="ref-list">
+          <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Boisier, S. (2004). Una (re)visión heterodoxa del desarrollo territorial.</strong><span>Estudios Sociales, 23(107). · Teórica</span></div></li>
+          <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Sen, A. (1999). Development as Freedom.</strong><span>Oxford University Press. Capítulos 1 y 3. · Teórica</span></div></li>
+          <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>CONAPO (2021). Índice de Marginación por Entidad Federativa y Municipio 2020.</strong><span>CONAPO, México. · Teórica y fuente de datos</span></div></li>
+          <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>Monmonier, M. (1996). How to Lie with Maps.</strong><span>University of Chicago Press. · Técnica</span></div></li>
+          <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>Brewer, C. A. (2015). Designing Better Maps: A Guide for GIS Users.</strong><span>Esri Press. (ColorBrewer: colorbrewer2.org) · Técnica</span></div></li>
+          <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>Slocum, T. et al. (2009). Thematic Cartography and Geovisualization.</strong><span>Pearson, 3ª ed. · Técnica</span></div></li>
+        </ul>
+      </div>
+
+      <div id="sugerida" class="tab-panel">
+        <ul class="ref-list">
+          <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Boisier, S. (2004). Una (re)visión heterodoxa del desarrollo territorial.</strong><span>Estudios Sociales, 23(107). · Lectura de arranque recomendada</span></div></li>
+          <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>Brewer, C. A. (2015). Designing Better Maps: A Guide for GIS Users.</strong><span>Esri Press. · Referencia permanente para diseño cartográfico</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p><strong>Curso DGAPA 2026</strong> · Análisis Espacial para el Desarrollo Regional con QGIS</p>
+    <p style="margin-top:.4rem;">Módulo 2 de 4 · 6 horas · Carlos David García Hernández · Facultad de Economía UNAM</p>
+  </footer>
+
+  <script>
+    // ── PROGRESS ──────────────────────────────────────
+    window.addEventListener('scroll', () => {
+      const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+      document.getElementById('progress').style.width = pct + '%';
+    });
+
+    // ── REVEAL ────────────────────────────────────────
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach((e, i) => { if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i * 60); });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ── TABS ──────────────────────────────────────────
+    function switchTab(id, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    // ── CLASIFICACIÓN INTERACTIVA ─────────────────────
+    const IMstates = [
+      { name:'Chiapas', v:1.82 }, { name:'Guerrero', v:1.63 }, { name:'Oaxaca', v:1.52 },
+      { name:'Veracruz', v:0.94 }, { name:'Hidalgo', v:0.82 }, { name:'Michoacán', v:0.71 },
+      { name:'Puebla', v:0.63 }, { name:'San Luis Potosí', v:0.54 }, { name:'Tabasco', v:0.48 },
+      { name:'Nayarit', v:0.39 }, { name:'Zacatecas', v:0.21 }, { name:'Durango', v:0.12 },
+      { name:'Campeche', v:0.04 }, { name:'Yucatán', v:-0.07 }, { name:'Tlaxcala', v:-0.18 },
+      { name:'Guanajuato', v:-0.28 }, { name:'Sinaloa', v:-0.41 }, { name:'Morelos', v:-0.58 },
+      { name:'México', v:-0.68 }, { name:'Colima', v:-0.79 }, { name:'Jalisco', v:-0.87 },
+      { name:'Querétaro', v:-0.97 }, { name:'Sonora', v:-1.05 }, { name:'Tamaulipas', v:-1.08 },
+      { name:'Chihuahua', v:-1.12 }, { name:'Quintana Roo', v:-1.01 }, { name:'Baja California Sur', v:-1.19 },
+      { name:'Coahuila', v:-1.28 }, { name:'Baja California', v:-1.31 }, { name:'Aguascalientes', v:-1.48 },
+      { name:'Nuevo León', v:-1.71 }, { name:'Ciudad de México', v:-1.98 }
+    ].sort((a,b) => a.v - b.v);
+
+    const clasColors = ['#1a9641','#a6d96a','#ffffbf','#fdae61','#d7191c'];
+    const clasLabels = ['Muy bajo','Bajo','Medio','Alto','Muy alto'];
+
+    const clasConfig = {
+      jenks: {
+        title: 'Natural Breaks (Jenks)',
+        desc: 'Minimiza la varianza dentro de cada clase y maximiza las diferencias entre clases. Los límites se colocan donde existen "saltos naturales" en los datos. Es el método más adecuado para datos con distribución irregular.',
+        pros: '✔ Refleja la estructura real de los datos · Ideal para distribuciones asimétricas',
+        cons: '✖ Los cortes cambian con cada dataset, difícil comparar entre mapas',
+        breaks: [-1.98, -1.19, -0.41, 0.21, 0.94, 1.82]
+      },
+      quantile: {
+        title: 'Cuantiles',
+        desc: 'Divide los datos en 5 grupos con el mismo número de observaciones (6-7 estados cada uno). Garantiza que todas las clases de color tengan igual representación visual en el mapa.',
+        pros: '✔ Todos los colores aparecen con igual frecuencia · Buen contraste visual',
+        cons: '✖ Puede agrupar valores muy distintos en la misma clase',
+        breaks: [-1.98, -1.09, -0.58, -0.01, 0.56, 1.82]
+      },
+      equal: {
+        title: 'Intervalos Iguales',
+        desc: 'Divide el rango total (de −1.98 a +1.82 = 3.80 unidades) en 5 partes iguales de 0.76 cada una. Simple de explicar, pero puede resultar en clases con muy pocos o muchos elementos.',
+        pros: '✔ Fácil de entender y explicar · Comparable entre diferentes mapas',
+        cons: '✖ Puede crear clases vacías o casi vacías con datos sesgados',
+        breaks: [-1.98, -1.22, -0.46, 0.30, 1.06, 1.82]
+      }
+    };
+
+    let currentClas = 'jenks';
+
+    function getClassIndex(v, breaks) {
+      for (let i = 0; i < breaks.length - 2; i++) {
+        if (v <= breaks[i + 1]) return i;
+      }
+      return breaks.length - 2;
+    }
+
+    function drawClasChart(method) {
+      const cfg = clasConfig[method];
+      const box = document.getElementById('clas-chart-box');
+      const W = box.clientWidth - 32;
+      const barH = 14, gap = 4, H = IMstates.length * (barH + gap) + 40;
+
+      const svg = d3.select('#clas-chart')
+        .attr('viewBox', `0 0 ${W} ${H}`)
+        .attr('height', H);
+
+      svg.selectAll('*').remove();
+
+      const xScale = d3.scaleLinear()
+        .domain([-2.2, 2.0])
+        .range([90, W - 10]);
+
+      const zeroX = xScale(0);
+
+      // Zero line
+      svg.append('line')
+        .attr('x1', zeroX).attr('y1', 0)
+        .attr('x2', zeroX).attr('y2', H - 20)
+        .attr('stroke', '#30363d').attr('stroke-width', 1).attr('stroke-dasharray', '3,3');
+
+      svg.append('text')
+        .attr('x', zeroX).attr('y', H - 6)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#8b949e').attr('font-size', 9)
+        .text('0');
+
+      // Class break lines
+      cfg.breaks.slice(1, -1).forEach(b => {
+        const bx = xScale(b);
+        svg.append('line')
+          .attr('x1', bx).attr('y1', 0)
+          .attr('x2', bx).attr('y2', H - 20)
+          .attr('stroke', '#60a5fa').attr('stroke-width', 1.5).attr('stroke-dasharray', '5,3')
+          .attr('opacity', 0.6);
+      });
+
+      // Bars
+      IMstates.forEach((d, i) => {
+        const y = i * (barH + gap);
+        const ci = getClassIndex(d.v, cfg.breaks);
+        const color = clasColors[ci];
+        const x1 = d.v < 0 ? xScale(d.v) : zeroX;
+        const x2 = d.v < 0 ? zeroX : xScale(d.v);
+
+        svg.append('rect')
+          .attr('x', x1).attr('y', y)
+          .attr('width', Math.max(x2 - x1, 2))
+          .attr('height', barH)
+          .attr('fill', color)
+          .attr('rx', 2)
+          .attr('opacity', 0.85);
+
+        svg.append('text')
+          .attr('x', 85).attr('y', y + barH - 3)
+          .attr('text-anchor', 'end')
+          .attr('fill', '#8b949e').attr('font-size', 8.5)
+          .text(d.name.length > 12 ? d.name.slice(0, 11) + '…' : d.name);
+      });
+    }
+
+    function updateClasInfo(method) {
+      const cfg = clasConfig[method];
+      document.getElementById('clas-title').textContent = cfg.title;
+      document.getElementById('clas-desc').textContent  = cfg.desc;
+      document.getElementById('clas-pros').textContent  = cfg.pros;
+      document.getElementById('clas-cons').textContent  = cfg.cons;
+
+      const list = document.getElementById('clas-breaks');
+      list.innerHTML = '';
+      cfg.breaks.slice(0, -1).forEach((b, i) => {
+        const li = document.createElement('li');
+        li.className = 'break-item';
+        li.innerHTML = `<span class="break-swatch" style="background:${clasColors[i]}"></span>
+          <strong>${clasLabels[i]}</strong>
+          <span style="margin-left:auto;">${b.toFixed(2)} – ${cfg.breaks[i+1].toFixed(2)}</span>`;
+        list.appendChild(li);
+      });
+    }
+
+    function setClas(method, btn) {
+      currentClas = method;
+      document.querySelectorAll('.clas-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      drawClasChart(method);
+      updateClasInfo(method);
+    }
+
+    // Init classification chart after a brief delay (DOM ready)
+    setTimeout(() => {
+      drawClasChart('jenks');
+      updateClasInfo('jenks');
+    }, 300);
+
+    window.addEventListener('resize', () => drawClasChart(currentClas));
+
+    // ── MAPA MARGINACIÓN ──────────────────────────────
+    (function() {
+      const IM = {
+        'Aguascalientes': -1.48, 'Baja California': -1.31, 'Baja California Sur': -1.19,
+        'Campeche': 0.04, 'Chiapas': 1.82, 'Chihuahua': -1.12, 'Ciudad de México': -1.98,
+        'Coahuila de Zaragoza': -1.28, 'Colima': -0.79, 'Durango': 0.12,
+        'Guanajuato': -0.28, 'Guerrero': 1.63, 'Hidalgo': 0.82, 'Jalisco': -0.87,
+        'México': -0.68, 'Michoacán de Ocampo': 0.71, 'Morelos': -0.58, 'Nayarit': 0.39,
+        'Nuevo León': -1.71, 'Oaxaca': 1.52, 'Puebla': 0.63, 'Querétaro': -0.97,
+        'Quintana Roo': -1.01, 'San Luis Potosí': 0.54, 'Sinaloa': -0.41,
+        'Sonora': -1.05, 'Tabasco': 0.48, 'Tamaulipas': -1.08, 'Tlaxcala': -0.18,
+        'Veracruz de Ignacio de la Llave': 0.94, 'Yucatán': -0.07, 'Zacatecas': 0.21
+      };
+
+      const jenksBreaks = [-1.98, -1.19, -0.41, 0.21, 0.94, 1.82];
+      const mapColors   = ['#1a9641','#a6d96a','#d9ef8b','#fdae61','#d7191c'];
+      const mapLabels   = ['Muy bajo','Bajo','Medio','Alto','Muy alto'];
+
+      function lookup(rawName) {
+        if (IM[rawName] !== undefined) return IM[rawName];
+        const lower = rawName.toLowerCase();
+        for (const [k, v] of Object.entries(IM)) {
+          if (k.toLowerCase().startsWith(lower.split(' ')[0])) return v;
+        }
+        return null;
+      }
+
+      function getColor(v) {
+        if (v === null) return '#1c2230';
+        for (let i = 0; i < jenksBreaks.length - 2; i++) {
+          if (v <= jenksBreaks[i + 1]) return mapColors[i];
+        }
+        return mapColors[mapColors.length - 1];
+      }
+
+      function getGrado(v) {
+        if (v === null) return '';
+        for (let i = 0; i < jenksBreaks.length - 2; i++) {
+          if (v <= jenksBreaks[i + 1]) return `Marginación ${mapLabels[i]}`;
+        }
+        return `Marginación ${mapLabels[mapLabels.length - 1]}`;
+      }
+
+      // Legend
+      const legend = document.getElementById('map-legend');
+      mapColors.forEach((c, i) => {
+        const row = document.createElement('div');
+        row.className = 'legend-row';
+        row.innerHTML = `<span class="legend-swatch" style="background:${c}"></span><span style="color:#8b949e">${mapLabels[i]}</span>`;
+        legend.appendChild(row);
+      });
+
+      const container = document.getElementById('mapa-container');
+      const GEO_URL = 'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/mexico.geojson';
+
+      fetch(GEO_URL)
+        .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+        .then(geo => {
+          document.getElementById('map-loading').style.display = 'none';
+          document.getElementById('map-legend').style.display  = 'block';
+
+          const W = container.clientWidth;
+          const H = Math.max(container.clientHeight, 340);
+
+          const projection = d3.geoMercator().fitExtent([[12,12],[W-12,H-12]], geo);
+          const path = d3.geoPath().projection(projection);
+
+          const svg = d3.select('#mexico-map')
+            .attr('viewBox', `0 0 ${W} ${H}`)
+            .attr('preserveAspectRatio', 'xMidYMid meet');
+
+          const defs = svg.append('defs');
+          const f = defs.append('filter').attr('id','shadow2');
+          f.append('feDropShadow').attr('dx',0).attr('dy',1).attr('stdDeviation',2).attr('flood-color','rgba(0,0,0,.4)');
+
+          const g = svg.append('g');
+          const tooltip = document.getElementById('map-tooltip');
+
+          g.selectAll('path')
+            .data(geo.features)
+            .enter().append('path')
+              .attr('d', path)
+              .attr('fill', d => { const v = lookup(d.properties.name || ''); return getColor(v); })
+              .attr('stroke', '#0d1117').attr('stroke-width', 0.7)
+              .attr('filter', 'url(#shadow2)')
+              .style('cursor', 'pointer')
+              .on('mouseover', function(event, d) {
+                const name = d.properties.name || '';
+                const v = lookup(name);
+                d3.select(this).raise().attr('stroke','#fff').attr('stroke-width', 1.8);
+                document.getElementById('tt-name').textContent = name || 'Estado';
+                document.getElementById('tt-val').textContent  = v !== null ? `IM 2020: ${v.toFixed(2)}` : 'Sin dato';
+                document.getElementById('tt-grado').textContent = getGrado(v);
+                tooltip.style.opacity = '1';
+              })
+              .on('mousemove', function(event) {
+                const rect = container.getBoundingClientRect();
+                let tx = event.clientX - rect.left + 14;
+                let ty = event.clientY - rect.top  - 14;
+                if (tx + 200 > rect.width)  tx -= 220;
+                if (ty + 80  > rect.height) ty -= 90;
+                tooltip.style.left = tx + 'px';
+                tooltip.style.top  = ty + 'px';
+              })
+              .on('mouseout', function() {
+                d3.select(this).attr('stroke','#0d1117').attr('stroke-width', 0.7);
+                tooltip.style.opacity = '0';
+              });
+
+          svg.call(d3.zoom().scaleExtent([1,6]).on('zoom', e => g.attr('transform', e.transform)));
+        })
+        .catch(() => {
+          document.getElementById('map-loading').style.display = 'none';
+          document.getElementById('map-error').style.display   = 'flex';
+        });
+    })();
+
+    // ── HERO CANVAS ───────────────────────────────────
+    const canvas = document.getElementById('heroCanvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H, pts;
+
+    function resize() {
+      const hero = canvas.parentElement;
+      W = canvas.width  = hero.offsetWidth;
+      H = canvas.height = hero.offsetHeight;
+      init();
+    }
+
+    function init() {
+      pts = Array.from({ length: 80 }, () => ({
+        x: Math.random() * W, y: Math.random() * H,
+        r: Math.random() * 1.8 + .4,
+        vx: (Math.random() - .5) * .22,
+        vy: (Math.random() - .5) * .22,
+        hue: Math.random() > .5 ? '#a78bfa' : '#2dd4bf',
+      }));
+    }
+
+    function drawCanvas() {
+      ctx.clearRect(0, 0, W, H);
+      const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*.7);
+      grad.addColorStop(0, 'rgba(109,40,217,.07)');
+      grad.addColorStop(1, 'rgba(13,17,23,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i+1; j < pts.length; j++) {
+          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+          const d = Math.sqrt(dx*dx + dy*dy);
+          if (d < 110) {
+            ctx.beginPath();
+            ctx.moveTo(pts[i].x, pts[i].y);
+            ctx.lineTo(pts[j].x, pts[j].y);
+            ctx.strokeStyle = `rgba(167,139,250,${.1*(1-d/110)})`;
+            ctx.lineWidth = .7;
+            ctx.stroke();
+          }
+        }
+      }
+      pts.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = p.hue + '99';
+        ctx.fill();
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > W) p.vx *= -1;
+        if (p.y < 0 || p.y > H) p.vy *= -1;
+      });
+      requestAnimationFrame(drawCanvas);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    drawCanvas();
+  </script>
+</body>
+</html>

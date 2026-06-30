@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Módulo 3 · Análisis Espacial Básico</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --naranja:  #c2410c;
+      --naranja-c:#fb923c;
+      --ambar:    #d97706;
+      --ambar-c:  #fbbf24;
+      --verde:    #16a34a;
+      --verde-c:  #4ade80;
+      --fondo:    #0d1117;
+      --fondo2:   #161b22;
+      --fondo3:   #1c2230;
+      --texto:    #e6edf3;
+      --sub:      #8b949e;
+      --borde:    #30363d;
+      --r:        12px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--fondo); color: var(--texto); line-height: 1.65; overflow-x: hidden; }
+
+    #progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--naranja-c), var(--ambar-c)); z-index: 200; transition: width .1s; }
+
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; background: rgba(13,17,23,.88); backdrop-filter: blur(14px); border-bottom: 1px solid var(--borde); display: flex; align-items: center; justify-content: space-between; padding: .75rem 2rem; }
+    .nav-brand { font-size: .85rem; font-weight: 700; color: var(--naranja-c); letter-spacing: .04em; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { font-size: .82rem; color: var(--sub); text-decoration: none; transition: color .2s; }
+    .nav-links a:hover { color: var(--texto); }
+    @media (max-width: 580px) { .nav-links { display: none; } }
+
+    /* ── HERO ── */
+    .hero { position: relative; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3rem 2rem; overflow: hidden; }
+    .hero-canvas { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; display: block; }
+    .hero-content { position: relative; z-index: 1; max-width: 860px; }
+    .badge { display: inline-flex; align-items: center; gap: .5rem; background: rgba(194,65,12,.22); border: 1px solid rgba(251,146,60,.32); border-radius: 999px; padding: .35rem 1rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; color: var(--naranja-c); margin-bottom: 1.5rem; opacity: 0; animation: fadeUp .6s .2s forwards; }
+    h1 { font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 800; line-height: 1.1; background: linear-gradient(135deg, #fff 30%, var(--naranja-c) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; opacity: 0; animation: fadeUp .7s .35s forwards; }
+    .hero-sub { margin-top: 1.2rem; font-size: 1.15rem; color: var(--sub); max-width: 620px; margin-inline: auto; opacity: 0; animation: fadeUp .7s .5s forwards; }
+    .hero-chips { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; margin-top: 2rem; opacity: 0; animation: fadeUp .7s .65s forwards; }
+    .chip { display: flex; align-items: center; gap: .45rem; background: var(--fondo2); border: 1px solid var(--borde); border-radius: 999px; padding: .4rem 1rem; font-size: .85rem; }
+    .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot-n { background: var(--naranja-c); }
+    .dot-a { background: var(--ambar-c); }
+    .dot-v { background: var(--verde-c); }
+    .scroll-hint { position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: .5rem; color: var(--sub); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; opacity: 0; animation: fadeUp .7s 1.2s forwards; }
+    .scroll-arrow { width: 24px; height: 24px; border-right: 2px solid var(--sub); border-bottom: 2px solid var(--sub); transform: rotate(45deg); animation: bounce 1.5s infinite; }
+
+    /* ── SECTIONS ── */
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1060px; margin-inline: auto; }
+    .section-label { font-size: .75rem; text-transform: uppercase; letter-spacing: .12em; color: var(--naranja-c); font-weight: 600; margin-bottom: .75rem; }
+    .section-title { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 700; line-height: 1.2; margin-bottom: 1rem; }
+    .section-desc { color: var(--sub); max-width: 680px; font-size: 1.05rem; }
+    .divider { border: none; border-top: 1px solid var(--borde); }
+
+    /* ── OBJETIVO ── */
+    .objetivo-box { background: linear-gradient(135deg, rgba(194,65,12,.12), rgba(217,119,6,.09)); border: 1px solid rgba(251,146,60,.22); border-radius: var(--r); padding: 2.5rem; position: relative; overflow: hidden; }
+    .objetivo-box::before { content:''; position:absolute; top:-60px; left:-60px; width:200px; height:200px; background:radial-gradient(circle, rgba(251,146,60,.1), transparent 70%); }
+    .objetivo-icon { width:52px; height:52px; background:linear-gradient(135deg, var(--naranja), var(--naranja-c)); border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:1.25rem; font-size:1.5rem; }
+    .objetivo-box p { font-size:1.1rem; line-height:1.75; position:relative; z-index:1; }
+    .objetivo-box strong { color: var(--naranja-c); }
+
+    /* ── CONCEPTOS ── */
+    #conceptos { background: var(--fondo2); }
+    .conceptos-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1.25rem; margin-top:3rem; }
+    .concepto-card { background:var(--fondo3); border:1px solid var(--borde); border-radius:var(--r); padding:1.75rem; position:relative; overflow:hidden; cursor:default; transition:transform .25s, border-color .25s, box-shadow .25s; }
+    .concepto-card:hover { transform:translateY(-4px); border-color:var(--naranja-c); box-shadow:0 8px 32px rgba(194,65,12,.18); }
+    .concepto-card::after { content:''; position:absolute; bottom:0; left:0; height:3px; width:100%; background:var(--gc,linear-gradient(90deg,var(--naranja),var(--naranja-c))); transform:scaleX(0); transform-origin:left; transition:transform .3s; }
+    .concepto-card:hover::after { transform:scaleX(1); }
+    .concepto-num { font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--sub); margin-bottom:.6rem; }
+    .concepto-card h3 { font-size:1.05rem; font-weight:700; margin-bottom:.6rem; }
+    .concepto-card p { font-size:.9rem; color:var(--sub); line-height:1.6; }
+    .concepto-emoji { font-size:2rem; margin-bottom:.85rem; display:block; }
+
+    /* ── GEOPROCESAMIENTO INTERACTIVO ── */
+    #geopro { background: var(--fondo); }
+    .geo-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1.25rem; margin-top:2.5rem; }
+    @media(max-width:640px){ .geo-grid { grid-template-columns:1fr; } }
+    .geo-card { background:var(--fondo2); border:1px solid var(--borde); border-radius:var(--r); padding:1.5rem; cursor:pointer; transition:border-color .25s, transform .2s; }
+    .geo-card:hover, .geo-card.active { border-color:var(--naranja-c); transform:translateY(-2px); }
+    .geo-card.active { background: rgba(194,65,12,.07); }
+    .geo-preview { width:100%; height:140px; border-radius:8px; background:var(--fondo3); margin-bottom:1rem; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+    .geo-preview svg { width:100%; height:100%; }
+    .geo-card h4 { font-size:1rem; font-weight:700; margin-bottom:.35rem; }
+    .geo-card p { font-size:.85rem; color:var(--sub); }
+    .geo-badge { display:inline-block; font-size:.72rem; padding:.2rem .6rem; border-radius:4px; background:rgba(251,146,60,.15); color:var(--naranja-c); margin-top:.5rem; }
+
+    /* ── ISOCRONA DEMO ── */
+    .iso-demo-box { background:var(--fondo2); border:1px solid var(--borde); border-radius:var(--r); padding:1.5rem; margin-top:2.5rem; }
+    .iso-demo-title { font-size:.9rem; font-weight:700; margin-bottom:.75rem; }
+    .iso-controls { display:flex; gap:.75rem; margin-bottom:1rem; flex-wrap:wrap; }
+    .iso-btn { padding:.4rem 1rem; border-radius:8px; border:1px solid var(--borde); background:transparent; color:var(--sub); font-size:.85rem; cursor:pointer; transition:all .2s; }
+    .iso-btn.active { background:var(--naranja); border-color:var(--naranja); color:#fff; }
+    #iso-svg-box { width:100%; height:200px; border-radius:8px; background:var(--fondo3); position:relative; }
+    #iso-svg { width:100%; height:100%; }
+
+    /* ── TIMELINE ── */
+    #sesion { background: var(--fondo2); }
+    .timeline { margin-top:3rem; position:relative; }
+    .timeline::before { content:''; position:absolute; left:28px; top:0; bottom:0; width:2px; background:linear-gradient(to bottom, var(--naranja-c), var(--ambar-c)); }
+    .tl-item { display:flex; gap:1.5rem; margin-bottom:2.5rem; position:relative; }
+    .tl-dot { width:58px; height:58px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:1.3rem; border:2px solid var(--borde); background:var(--fondo2); position:relative; z-index:1; transition:border-color .25s, background .25s; }
+    .tl-item:hover .tl-dot { border-color:var(--naranja-c); background:rgba(194,65,12,.12); }
+    .tl-body { flex:1; background:var(--fondo3); border:1px solid var(--borde); border-radius:var(--r); padding:1.25rem 1.5rem; transition:border-color .25s; }
+    .tl-item:hover .tl-body { border-color:var(--naranja-c); }
+    .tl-body h3 { font-size:1rem; font-weight:700; margin-bottom:.35rem; }
+    .tl-body p { font-size:.9rem; color:var(--sub); }
+    .tl-tag { display:inline-block; font-size:.72rem; background:rgba(251,146,60,.15); color:var(--naranja-c); border-radius:4px; padding:.15rem .5rem; margin-bottom:.5rem; }
+
+    /* ── TOOLS ── */
+    .tools-grid { display:flex; flex-wrap:wrap; gap:1rem; margin-top:2.5rem; }
+    .tool-card { display:flex; align-items:center; gap:.85rem; background:var(--fondo2); border:1px solid var(--borde); border-radius:var(--r); padding:1rem 1.4rem; transition:border-color .25s, transform .2s; flex:1; min-width:200px; }
+    .tool-card:hover { border-color:var(--ambar-c); transform:translateY(-3px); }
+    .tool-icon { width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg, var(--naranja), var(--ambar-c)); display:flex; align-items:center; justify-content:center; font-size:1.3rem; flex-shrink:0; }
+    .tool-info strong { display:block; font-size:.95rem; }
+    .tool-info span { font-size:.82rem; color:var(--sub); }
+
+    /* ── ENTREGABLE ── */
+    #entregable { background: var(--fondo2); }
+    .entregable-wrap { display:grid; grid-template-columns:1fr 1fr; gap:2rem; margin-top:3rem; align-items:start; }
+    @media(max-width:760px){ .entregable-wrap { grid-template-columns:1fr; } }
+    .mapa-preview { border-radius:var(--r); overflow:hidden; position:relative; border:1px solid var(--borde); background:#0d1117; min-height:420px; }
+    #cdmx-svg { display:block; width:100%; }
+    #cdmx-tt { position:absolute; background:rgba(13,17,23,.95); border:1px solid var(--borde); border-radius:8px; padding:.55rem .9rem; font-size:.82rem; pointer-events:none; opacity:0; transition:opacity .15s; z-index:20; max-width:230px; backdrop-filter:blur(6px); color:var(--texto); line-height:1.5; }
+    #cdmx-loading { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.75rem; color:var(--sub); font-size:.88rem; }
+    /* Toggle bar */
+    #iso-toggle-bar { position:absolute; top:10px; right:10px; z-index:15; display:flex; flex-direction:column; gap:6px; }
+    .iso-toggle { display:flex; align-items:center; gap:6px; background:rgba(13,17,23,.88); border:1px solid #30363d; border-radius:7px; padding:5px 10px; font-size:.75rem; color:#8b949e; cursor:pointer; transition:all .2s; white-space:nowrap; font-family:'Segoe UI',sans-serif; }
+    .iso-toggle:hover { border-color:#4a5568; color:#c6d2e0; }
+    .iso-toggle.active { border-color:var(--borde); color:var(--texto); background:rgba(20,28,42,.92); }
+    .iso-toggle.off { opacity:.45; }
+    .tg-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; transition:opacity .2s; }
+    .iso-toggle.off .tg-dot { opacity:.25; }
+    .mapa-preview svg { display:block; width:100%; height:100%; }
+    #map-tooltip { position:absolute; background:rgba(13,17,23,.95); border:1px solid var(--borde); border-radius:8px; padding:.55rem .9rem; font-size:.82rem; pointer-events:none; opacity:0; transition:opacity .15s; z-index:20; max-width:210px; backdrop-filter:blur(6px); }
+    #map-tooltip strong { display:block; margin-bottom:.2rem; font-size:.85rem; }
+    .tt-val { color:var(--naranja-c); font-weight:600; }
+    .tt-sub { font-size:.78rem; color:var(--sub); margin-top:.15rem; }
+    .map-loading { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.75rem; color:var(--sub); font-size:.88rem; }
+    .map-spinner { width:28px; height:28px; border:3px solid var(--borde); border-top-color:var(--naranja-c); border-radius:50%; animation:spin .8s linear infinite; }
+    .map-legend { position:absolute; bottom:10px; left:10px; background:rgba(13,17,23,.88); border:1px solid var(--borde); border-radius:8px; padding:.6rem .85rem; font-size:.72rem; backdrop-filter:blur(4px); display:none; }
+    .map-legend-title { color:var(--sub); margin-bottom:.45rem; letter-spacing:.05em; text-transform:uppercase; font-size:.68rem; }
+    .legend-row { display:flex; align-items:center; gap:.45rem; margin-bottom:.3rem; }
+    .legend-swatch { width:14px; height:14px; border-radius:3px; flex-shrink:0; }
+    .map-source { position:absolute; bottom:10px; right:10px; font-size:.65rem; color:var(--sub); background:rgba(13,17,23,.75); padding:.25rem .5rem; border-radius:4px; }
+    .map-error { position:absolute; inset:0; display:none; flex-direction:column; align-items:center; justify-content:center; gap:.5rem; color:var(--sub); font-size:.85rem; text-align:center; padding:1rem; }
+    .entregable-info h3 { font-size:1.35rem; font-weight:700; margin-bottom:1rem; line-height:1.3; }
+    .entregable-tags { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1.25rem; }
+    .etag { font-size:.8rem; padding:.3rem .8rem; border-radius:6px; border:1px solid var(--borde); color:var(--sub); }
+    .etag.n { border-color:var(--naranja); color:var(--naranja-c); background:rgba(194,65,12,.1); }
+    .etag.a { border-color:var(--ambar);   color:var(--ambar-c);   background:rgba(217,119,6,.1); }
+    .etag.v { border-color:var(--verde);   color:var(--verde-c);   background:rgba(22,163,74,.1); }
+    .criterio-box { background:var(--fondo3); border:1px solid var(--borde); border-left:3px solid var(--ambar-c); border-radius:var(--r); padding:1.25rem 1.5rem; margin-top:1.5rem; }
+    .criterio-box p { font-size:.9rem; color:var(--sub); line-height:1.65; }
+    .stat-row { display:flex; gap:.75rem; flex-wrap:wrap; margin-top:1.25rem; }
+    .stat-box { flex:1; min-width:100px; background:var(--fondo3); border:1px solid var(--borde); border-radius:10px; padding:.85rem 1rem; text-align:center; }
+    .stat-box .stat-val { font-size:1.15rem; font-weight:800; color:var(--naranja-c); }
+    .stat-box .stat-lbl { font-size:.72rem; color:var(--sub); margin-top:.2rem; }
+
+    /* ── BIBLIO ── */
+    #biblio { background: var(--fondo); }
+    .biblio-tabs { display:flex; gap:.5rem; margin-top:2.5rem; margin-bottom:1.5rem; }
+    .tab-btn { padding:.5rem 1.2rem; border-radius:8px; border:1px solid var(--borde); background:transparent; color:var(--sub); font-size:.88rem; cursor:pointer; transition:all .2s; }
+    .tab-btn.active, .tab-btn:hover { background:var(--naranja); border-color:var(--naranja); color:#fff; }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+    .ref-list { list-style:none; }
+    .ref-item { display:flex; gap:1rem; padding:1rem 0; border-bottom:1px solid var(--borde); align-items:flex-start; transition:padding-left .2s; }
+    .ref-item:hover { padding-left:.5rem; }
+    .ref-item:last-child { border-bottom:none; }
+    .ref-icon { width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+    .ref-icon.teo { background:rgba(251,146,60,.15); }
+    .ref-icon.tec { background:rgba(22,163,74,.15); }
+    .ref-body { flex:1; }
+    .ref-body strong { font-size:.95rem; display:block; margin-bottom:.2rem; }
+    .ref-body span { font-size:.83rem; color:var(--sub); }
+
+    footer { background:var(--fondo2); border-top:1px solid var(--borde); padding:2.5rem 2rem; text-align:center; color:var(--sub); font-size:.85rem; }
+    footer strong { color:var(--texto); }
+
+    .reveal { opacity:0; transform:translateY(24px); transition:opacity .6s, transform .6s; }
+    .reveal.visible { opacity:1; transform:translateY(0); }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes bounce { 0%,100%{transform:rotate(45deg) translateY(0)} 50%{transform:rotate(45deg) translateY(6px)} }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    @keyframes pulse-iso { 0%{opacity:.7;r:0} 100%{opacity:0;r:60} }
+    @keyframes expandRing { from{r:4;opacity:.9} to{r:var(--max-r,50);opacity:0} }
+  </style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<nav>
+  <span class="nav-brand">M3 · Análisis Espacial Básico</span>
+  <ul class="nav-links">
+    <li><a href="#objetivo">Objetivo</a></li>
+    <li><a href="#conceptos">Conceptos</a></li>
+    <li><a href="#geopro">Geoprocesamiento</a></li>
+    <li><a href="#sesion">Sesión</a></li>
+    <li><a href="#entregable">Entregable</a></li>
+    <li><a href="#biblio">Bibliografía</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <canvas class="hero-canvas" id="heroCanvas"></canvas>
+  <div class="hero-content">
+    <div class="badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      Módulo 3 de 4 · Curso DGAPA 2026
+    </div>
+    <h1>Análisis Espacial<br>Básico</h1>
+    <p class="hero-sub">Domina el geoprocesamiento vectorial y mide la accesibilidad territorial: ¿quién vive a más de 60 minutos de un hospital?</p>
+    <div class="hero-chips">
+      <span class="chip"><span class="chip-dot dot-n"></span>6 horas</span>
+      <span class="chip"><span class="chip-dot dot-a"></span>Buffer · Clip · Intersect · Dissolve</span>
+      <span class="chip"><span class="chip-dot dot-v"></span>Isócronas 30 y 60 min · ORS Tools</span>
+      <span class="chip"><span class="chip-dot dot-n"></span>Datos SINAIS · OSM</span>
+    </div>
+  </div>
+  <div class="scroll-hint">Explorar<div class="scroll-arrow"></div></div>
+</section>
+
+<hr class="divider"/>
+
+<!-- OBJETIVO -->
+<section id="objetivo">
+  <div class="container">
+    <p class="section-label reveal">Propósito del módulo</p>
+    <h2 class="section-title reveal">¿Qué vas a lograr?</h2>
+    <div class="objetivo-box reveal" style="margin-top:2rem">
+      <div class="objetivo-icon">🔧</div>
+      <p>Que el participante <strong>domine las operaciones de geoprocesamiento vectorial esenciales</strong>, comprenda el concepto de <strong>accesibilidad como dimensión del desarrollo regional</strong>, y sea capaz de <strong>cuantificar brechas territoriales de acceso a servicios e infraestructura</strong>.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- CONCEPTOS -->
+<section id="conceptos">
+  <div class="container">
+    <p class="section-label reveal">Lo que necesitas saber</p>
+    <h2 class="section-title reveal">Conceptos clave</h2>
+    <p class="section-desc reveal">De la teoría de redes de transporte a las herramientas que miden sus efectos en el territorio.</p>
+    <div class="conceptos-grid">
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#c2410c,#fb923c)">
+        <span class="concepto-emoji">⭕</span>
+        <p class="concepto-num">Operación 01</p>
+        <h3>Buffer</h3>
+        <p>Genera una zona de influencia a una distancia definida alrededor de un punto, línea o polígono. Ejemplo: buffer de 5 km alrededor de hospitales para estimar cobertura geográfica directa.</p>
+      </div>
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#d97706,#fbbf24)">
+        <span class="concepto-emoji">✂️</span>
+        <p class="concepto-num">Operación 02</p>
+        <h3>Clip</h3>
+        <p>Recorta una capa según la forma de otra. Permite extraer solo la información de una región específica (estado, municipio, área de estudio) desde una capa más grande.</p>
+      </div>
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#16a34a,#4ade80)">
+        <span class="concepto-emoji">🔀</span>
+        <p class="concepto-num">Operación 03</p>
+        <h3>Intersect</h3>
+        <p>Conserva únicamente las áreas donde dos capas se superponen y combina sus atributos. Indispensable para calcular qué municipios están dentro de una zona de cobertura.</p>
+      </div>
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#7c3aed,#a78bfa)">
+        <span class="concepto-emoji">🔗</span>
+        <p class="concepto-num">Operación 04</p>
+        <h3>Dissolve</h3>
+        <p>Fusiona múltiples polígonos en uno solo según un atributo común. Ejemplo: unir todos los municipios de un estado en un solo polígono, o combinar isócronas de varios hospitales.</p>
+      </div>
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#0891b2,#22d3ee)">
+        <span class="concepto-emoji">🕐</span>
+        <p class="concepto-num">Concepto 05</p>
+        <h3>Isócronas</h3>
+        <p>Zonas que delimitan todo lo alcanzable desde un punto en un tiempo dado (30, 60 min). A diferencia del buffer euclidiano, respetan la red vial real. ORS Tools las calcula en QGIS.</p>
+      </div>
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#be123c,#fb7185)">
+        <span class="concepto-emoji">🏥</span>
+        <p class="concepto-num">Concepto 06</p>
+        <h3>Accesibilidad territorial</h3>
+        <p>Dimensión del desarrollo regional que mide la facilidad con que una población alcanza oportunidades y servicios. Hansen (1959) y Geurs & van Wee (2004) formalizan cómo medirla espacialmente.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- GEOPROCESAMIENTO INTERACTIVO -->
+<section id="geopro">
+  <div class="container">
+    <p class="section-label reveal">Interactivo</p>
+    <h2 class="section-title reveal">Operaciones de geoprocesamiento</h2>
+    <p class="section-desc reveal">Haz clic en cada tarjeta para ver cómo funciona la operación. Estas son las herramientas que usarás en QGIS.</p>
+
+    <div class="geo-grid">
+
+      <!-- BUFFER -->
+      <div class="geo-card reveal active" onclick="selectOp('buffer',this)">
+        <div class="geo-preview">
+          <svg id="svg-buffer" viewBox="0 0 220 140">
+            <rect width="220" height="140" fill="#1c2230"/>
+            <!-- Hospital points -->
+            <circle class="buf-ring" cx="70" cy="70" r="45" fill="none" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+            <circle class="buf-ring" cx="70" cy="70" r="28" fill="rgba(251,146,60,.12)" stroke="#fb923c" stroke-width="1" opacity=".8"/>
+            <circle cx="70" cy="70" r="5" fill="#fb923c"/>
+            <text x="70" y="100" text-anchor="middle" fill="#8b949e" font-size="9" font-family="sans-serif">buffer 5 km</text>
+            <circle class="buf-ring" cx="155" cy="55" r="35" fill="none" stroke="#fb923c" stroke-width="1.5" stroke-dasharray="4,3" opacity=".5"/>
+            <circle class="buf-ring" cx="155" cy="55" r="22" fill="rgba(251,146,60,.12)" stroke="#fb923c" stroke-width="1" opacity=".8"/>
+            <circle cx="155" cy="55" r="5" fill="#fb923c"/>
+            <text x="185" y="110" text-anchor="middle" fill="#8b949e" font-size="9" font-family="sans-serif">hospital</text>
+          </svg>
+        </div>
+        <h4>Buffer</h4>
+        <p>Zona de distancia euclidiana alrededor de hospitales</p>
+        <span class="geo-badge">Vector → Herramientas de Geoprocesamiento</span>
+      </div>
+
+      <!-- CLIP -->
+      <div class="geo-card reveal" onclick="selectOp('clip',this)">
+        <div class="geo-preview">
+          <svg id="svg-clip" viewBox="0 0 220 140">
+            <rect width="220" height="140" fill="#1c2230"/>
+            <!-- Background layer (full) -->
+            <ellipse cx="110" cy="70" rx="85" ry="55" fill="rgba(251,146,60,.08)" stroke="#fb923c" stroke-width="1" stroke-dasharray="5,3"/>
+            <!-- Clip boundary -->
+            <rect x="55" y="30" width="110" height="80" fill="none" stroke="#4ade80" stroke-width="1.5" rx="4"/>
+            <!-- Result -->
+            <clipPath id="clip-rect"><rect x="55" y="30" width="110" height="80"/></clipPath>
+            <ellipse cx="110" cy="70" rx="85" ry="55" fill="rgba(251,146,60,.3)" stroke="#fb923c" stroke-width="1.5" clip-path="url(#clip-rect)"/>
+            <text x="110" y="128" text-anchor="middle" fill="#4ade80" font-size="9" font-family="sans-serif">máscara de recorte</text>
+            <text x="110" y="70" text-anchor="middle" fill="#fb923c" font-size="9" font-family="sans-serif" dominant-baseline="middle">resultado</text>
+          </svg>
+        </div>
+        <h4>Clip</h4>
+        <p>Recorta la cobertura hospitalaria a los límites estatales</p>
+        <span class="geo-badge">Vector → Herramientas de Geoprocesamiento</span>
+      </div>
+
+      <!-- INTERSECT -->
+      <div class="geo-card reveal" onclick="selectOp('intersect',this)">
+        <div class="geo-preview">
+          <svg id="svg-intersect" viewBox="0 0 220 140">
+            <rect width="220" height="140" fill="#1c2230"/>
+            <ellipse cx="90" cy="70" rx="62" ry="45" fill="rgba(251,146,60,.15)" stroke="#fb923c" stroke-width="1.5"/>
+            <ellipse cx="135" cy="70" rx="62" ry="45" fill="rgba(74,222,128,.12)" stroke="#4ade80" stroke-width="1.5"/>
+            <!-- Intersection highlight -->
+            <clipPath id="clip-int"><ellipse cx="90" cy="70" rx="62" ry="45"/></clipPath>
+            <ellipse cx="135" cy="70" rx="62" ry="45" fill="rgba(251,191,36,.45)" clip-path="url(#clip-int)"/>
+            <text x="75" y="72" text-anchor="middle" fill="#fb923c" font-size="8" font-family="sans-serif">municipios</text>
+            <text x="150" y="72" text-anchor="middle" fill="#4ade80" font-size="8" font-family="sans-serif">hospitales</text>
+            <text x="112" y="106" text-anchor="middle" fill="#fbbf24" font-size="8.5" font-family="sans-serif" font-weight="bold">intersección</text>
+          </svg>
+        </div>
+        <h4>Intersect</h4>
+        <p>Municipios que intersectan con la cobertura hospitalaria</p>
+        <span class="geo-badge">Vector → Herramientas de Geoprocesamiento</span>
+      </div>
+
+      <!-- DISSOLVE -->
+      <div class="geo-card reveal" onclick="selectOp('dissolve',this)">
+        <div class="geo-preview">
+          <svg id="svg-dissolve" viewBox="0 0 220 140">
+            <rect width="220" height="140" fill="#1c2230"/>
+            <!-- Multiple separate pieces -->
+            <g id="dissolve-before">
+              <rect x="25" y="30" width="45" height="40" fill="rgba(251,146,60,.2)" stroke="#fb923c" stroke-width="1.5" rx="3"/>
+              <rect x="75" y="25" width="50" height="48" fill="rgba(251,146,60,.18)" stroke="#fb923c" stroke-width="1.5" rx="3"/>
+              <rect x="130" y="32" width="42" height="38" fill="rgba(251,146,60,.22)" stroke="#fb923c" stroke-width="1.5" rx="3"/>
+              <rect x="40" y="76" width="55" height="35" fill="rgba(251,146,60,.16)" stroke="#fb923c" stroke-width="1.5" rx="3"/>
+              <rect x="100" y="75" width="60" height="38" fill="rgba(251,146,60,.2)" stroke="#fb923c" stroke-width="1.5" rx="3"/>
+            </g>
+            <!-- Arrow -->
+            <text x="110" y="122" text-anchor="middle" fill="#8b949e" font-size="9" font-family="sans-serif">→ un solo polígono fusionado</text>
+          </svg>
+        </div>
+        <h4>Dissolve</h4>
+        <p>Fusiona isócronas de múltiples hospitales en una zona continua</p>
+        <span class="geo-badge">Vector → Herramientas de Geoprocesamiento</span>
+      </div>
+
+    </div>
+
+    <!-- ISOCRONAS DEMO -->
+    <div class="iso-demo-box reveal" style="margin-top:2rem">
+      <div class="iso-demo-title">⏱ Isócronas vs Buffers — ¿cuál es la diferencia?</div>
+      <p style="font-size:.88rem;color:var(--sub);margin-bottom:1rem;">Las isócronas siguen la red vial real; los buffers usan distancia en línea recta. Selecciona para comparar:</p>
+      <div class="iso-controls">
+        <button class="iso-btn active" onclick="setIso('iso30',this)">Isócrona 30 min</button>
+        <button class="iso-btn" onclick="setIso('iso60',this)">Isócrona 60 min</button>
+        <button class="iso-btn" onclick="setIso('buf',this)">Buffer euclidiano</button>
+      </div>
+      <div id="iso-svg-box">
+        <svg id="iso-svg" viewBox="0 0 500 200">
+          <!-- Grid background -->
+          <rect width="500" height="200" fill="#1c2230"/>
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#30363d" stroke-width=".5"/>
+            </pattern>
+          </defs>
+          <rect width="500" height="200" fill="url(#grid)"/>
+
+          <!-- Roads -->
+          <line x1="250" y1="0" x2="250" y2="200" stroke="#374151" stroke-width="3"/>
+          <line x1="0" y1="100" x2="500" y2="100" stroke="#374151" stroke-width="3"/>
+          <line x1="150" y1="0" x2="300" y2="200" stroke="#374151" stroke-width="1.5"/>
+          <line x1="350" y1="0" x2="200" y2="200" stroke="#374151" stroke-width="1.5"/>
+          <line x1="0" y1="50" x2="500" y2="50" stroke="#374151" stroke-width="1"/>
+          <line x1="0" y1="150" x2="500" y2="150" stroke="#374151" stroke-width="1"/>
+
+          <!-- Iso shapes -->
+          <g id="iso-shape">
+            <!-- Isócrona 30 min (irregular following roads) -->
+            <polygon id="poly-iso30"
+              points="250,30 295,45 330,80 320,130 290,155 250,165 210,155 175,130 165,80 200,45"
+              fill="rgba(251,146,60,.25)" stroke="#fb923c" stroke-width="2" opacity="0"/>
+            <!-- Isócrona 60 min -->
+            <polygon id="poly-iso60"
+              points="250,8 330,28 390,65 400,130 370,170 300,192 250,195 200,192 130,170 100,130 110,65 170,28"
+              fill="rgba(251,191,36,.18)" stroke="#fbbf24" stroke-width="2" opacity="0"/>
+            <!-- Buffer (circle) -->
+            <circle id="circle-buf" cx="250" cy="100" r="70" fill="rgba(74,222,128,.15)" stroke="#4ade80" stroke-width="2" stroke-dasharray="6,3" opacity="0"/>
+          </g>
+
+          <!-- Hospital point -->
+          <circle cx="250" cy="100" r="7" fill="#fb923c"/>
+          <circle cx="250" cy="100" r="12" fill="none" stroke="#fb923c" stroke-width="1.5" opacity=".5"/>
+          <text x="265" y="92" fill="#fb923c" font-size="10" font-family="sans-serif" font-weight="bold">Hospital</text>
+        </svg>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- TIMELINE -->
+<section id="sesion">
+  <div class="container">
+    <p class="section-label reveal">Estructura de la sesión</p>
+    <h2 class="section-title reveal">¿Cómo está organizado el módulo?</h2>
+    <p class="section-desc reveal">6 horas, dos sesiones. Al final sabrás medir quién tiene acceso real a servicios de salud.</p>
+    <div class="timeline reveal">
+      <div class="tl-item">
+        <div class="tl-dot">📖</div>
+        <div class="tl-body">
+          <span class="tl-tag">Sesión 1 · Hora 1</span>
+          <h3>Accesibilidad territorial como problema de política pública</h3>
+          <p>¿Qué es la accesibilidad? Tipos (física, económica, temporal). Donaldson (2018): cómo las vías de transporte transforman el desarrollo. México: déficit de hospitales públicos en zonas rurales.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">⭕</div>
+        <div class="tl-body">
+          <span class="tl-tag">Sesión 1 · Hora 2</span>
+          <h3>Geoprocesamiento básico: Buffer, Clip, Intersect</h3>
+          <p>Carga de hospitales públicos (CLUES-SINAIS). Buffer de 5 km. Clip por estado. Intersect con municipios para identificar cobertura geográfica directa. Comparación de resultados.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🗺️</div>
+        <div class="tl-body">
+          <span class="tl-tag">Sesión 1 · Hora 3</span>
+          <h3>Datos de red vial con QuickOSM</h3>
+          <p>Descarga de red vial y hospitales desde OpenStreetMap con el plugin QuickOSM directamente en QGIS. Limpieza de atributos. Preparación del dataset para análisis de redes.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">⏱️</div>
+        <div class="tl-body">
+          <span class="tl-tag">Sesión 2 · Hora 4</span>
+          <h3>Isócronas con ORS Tools</h3>
+          <p>Instalación y configuración del plugin ORS Tools (OpenRouteService). Generación de isócronas de 30 y 60 minutos en automóvil alrededor de hospitales. Dissolve para crear zonas continuas de cobertura.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">📊</div>
+        <div class="tl-body">
+          <span class="tl-tag">Sesión 2 · Hora 5</span>
+          <h3>Cuantificación de la brecha: Zonal Stats</h3>
+          <p>Diferencia (Dissolve de isócronas) → Clip con municipios → Intersect con población (CPV 2020). Uso de Zonal Statistics para calcular población sin acceso en 30 y 60 minutos.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🖼️</div>
+        <div class="tl-body">
+          <span class="tl-tag">Sesión 2 · Hora 6</span>
+          <h3>Layout del mapa de brecha y discusión</h3>
+          <p>Compositor: mapa de isócronas con zonas 30/60 min diferenciadas, municipios sin cobertura en rojo. Reflexión: ¿es igual la brecha en el norte y el sur? Implicaciones de política pública.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- HERRAMIENTAS -->
+<section style="padding:4rem 2rem; background:var(--fondo);">
+  <div class="container">
+    <p class="section-label reveal">Software del módulo</p>
+    <h2 class="section-title reveal">Herramientas que usarás</h2>
+    <div class="tools-grid">
+      <div class="tool-card reveal"><div class="tool-icon">🟢</div><div class="tool-info"><strong>QGIS 3.28 LTR</strong><span>Geoprocesamiento vectorial</span></div></div>
+      <div class="tool-card reveal"><div class="tool-icon">🛣️</div><div class="tool-info"><strong>QNEAT3 / ORS Tools</strong><span>Isócronas y matrices O-D</span></div></div>
+      <div class="tool-card reveal"><div class="tool-icon">🌍</div><div class="tool-info"><strong>QuickOSM</strong><span>Red vial y hospitales de OSM</span></div></div>
+      <div class="tool-card reveal"><div class="tool-icon">🏥</div><div class="tool-info"><strong>CLUES · SINAIS-SSA</strong><span>Hospitales públicos de México</span></div></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ENTREGABLE -->
+<section id="entregable">
+  <div class="container">
+    <p class="section-label reveal">Producto esperado</p>
+    <h2 class="section-title reveal">Tu entregable del módulo</h2>
+    <div class="entregable-wrap">
+
+      <div class="mapa-preview reveal" id="mapa-container">
+        <svg id="cdmx-svg" height="420"></svg>
+        <div id="cdmx-tt"></div>
+        <div id="cdmx-loading"><div class="map-spinner"></div>Cargando mapa…</div>
+        <div id="iso-toggle-bar">
+          <button class="iso-toggle active" id="btn-iso60" onclick="toggleLayer('iso60')">
+            <span class="tg-dot" style="background:#f59e0b"></span>Isócrona 60 min
+          </button>
+          <button class="iso-toggle active" id="btn-iso30" onclick="toggleLayer('iso30')">
+            <span class="tg-dot" style="background:#4ade80"></span>Isócrona 30 min
+          </button>
+          <button class="iso-toggle active" id="btn-hosp" onclick="toggleLayer('hosp')">
+            <span class="tg-dot" style="background:#ef4444"></span>Hospitales
+          </button>
+        </div>
+      </div>
+
+      <div class="entregable-info reveal">
+        <h3>Isócronas de accesibilidad hospitalaria · Ciudad de México</h3>
+        <p style="color:var(--sub);font-size:.93rem;line-height:1.7;">
+          El mapa muestra las isócronas de <strong style="color:var(--verde-c)">30 min</strong> y
+          <strong style="color:var(--ambar-c)">60 min</strong> desde <strong style="color:var(--texto)">8 hospitales públicos</strong>
+          distribuidos en distintas zonas de la CDMX.
+          Las zonas sin cobertura revelan la brecha territorial: Milpa Alta, Tláhuac y el sur de Tlalpan
+          superan los 60 minutos de traslado al hospital más cercano. Haz clic en cada polígono u hospital para más detalle.
+        </p>
+        <div class="stat-row">
+          <div class="stat-box"><div class="stat-val">8</div><div class="stat-lbl">Hospitales analizados</div></div>
+          <div class="stat-box"><div class="stat-val">~18%</div><div class="stat-lbl">Pob. sin acceso &lt;60'</div></div>
+          <div class="stat-box"><div class="stat-val">Milpa Alta</div><div class="stat-lbl">Alcaldía más vulnerable</div></div>
+        </div>
+        <div class="entregable-tags">
+          <span class="etag n">Isócronas ORS Tools</span>
+          <span class="etag a">CDMX · 8 hospitales</span>
+          <span class="etag v">Basemap OSM</span>
+          <span class="etag">Buffer + Dissolve</span>
+          <span class="etag">Clip + Intersect</span>
+        </div>
+        <div class="criterio-box">
+          <p><strong style="color:var(--ambar-c)">Criterio de evaluación:</strong><br>
+          Ejecutar operaciones de buffer, clip, intersect y dissolve, así como análisis de redes con ORS Tools para calcular isócronas y matrices origen-destino aplicadas a problemas de accesibilidad territorial.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- BIBLIOGRAFÍA -->
+<section id="biblio">
+  <div class="container">
+    <p class="section-label reveal">Lecturas del módulo</p>
+    <h2 class="section-title reveal">Bibliografía</h2>
+    <div class="biblio-tabs reveal">
+      <button class="tab-btn active" onclick="switchTab('consultada',this)">Consultada</button>
+      <button class="tab-btn" onclick="switchTab('sugerida',this)">Sugerida</button>
+    </div>
+    <div id="consultada" class="tab-panel active">
+      <ul class="ref-list">
+        <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Donaldson, D. (2018). Railroads of the Raj: Estimating the Impact of Transportation Infrastructure.</strong><span>American Economic Review, 108(4–5), 899–934. · Teórica</span></div></li>
+        <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Hansen, W. G. (1959). How Accessibility Shapes Land Use.</strong><span>Journal of the American Institute of Planners, 25(2), 73–76. · Teórica</span></div></li>
+        <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Geurs, K. & van Wee, B. (2004). Accessibility Evaluation of Land-Use and Transport Strategies.</strong><span>Journal of Transport Geography, 12(2), 127–140. · Teórica</span></div></li>
+        <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>Longley, P., Goodchild, M., Maguire, D. & Rhind, D. (2015). Geographic Information Science and Systems.</strong><span>Wiley, 4ª ed. Capítulo 14. · Técnica</span></div></li>
+        <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>OpenRouteService Documentation.</strong><span>openrouteservice.org/dev/#/api-docs · Técnica</span></div></li>
+      </ul>
+    </div>
+    <div id="sugerida" class="tab-panel">
+      <ul class="ref-list">
+        <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Geurs, K. & van Wee, B. (2004). Accessibility Evaluation of Land-Use and Transport Strategies.</strong><span>Journal of Transport Geography, 12(2), 127–140. · Referencia fundamental de accesibilidad</span></div></li>
+        <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>Longley, P., Goodchild, M., Maguire, D. & Rhind, D. (2015). Geographic Information Science and Systems.</strong><span>Wiley, 4ª ed. Capítulo 14. · Geoprocesamiento de referencia</span></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p><strong>Curso DGAPA 2026</strong> · Análisis Espacial para el Desarrollo Regional con QGIS</p>
+  <p style="margin-top:.4rem;">Módulo 3 de 4 · 6 horas · Carlos David García Hernández · Facultad de Economía UNAM</p>
+</footer>
+
+<script>
+  // ── PROGRESS ──────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    document.getElementById('progress').style.width =
+      (window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100) + '%';
+  });
+
+  // ── REVEAL ────────────────────────────────────────
+  new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => { if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i * 60); });
+  }, { threshold: 0.12 }).observe
+  ;
+  const revObs = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => { if (e.isIntersecting) setTimeout(() => e.target.classList.add('visible'), i * 60); });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => revObs.observe(el));
+
+  // ── TABS ──────────────────────────────────────────
+  function switchTab(id, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+
+  // ── GEOPROCESSING CARDS ───────────────────────────
+  function selectOp(op, card) {
+    document.querySelectorAll('.geo-card').forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+  }
+
+  // ── ISOCHRONE DEMO ────────────────────────────────
+  function setIso(type, btn) {
+    document.querySelectorAll('.iso-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const iso30 = document.getElementById('poly-iso30');
+    const iso60 = document.getElementById('poly-iso60');
+    const buf   = document.getElementById('circle-buf');
+    iso30.style.opacity = '0';
+    iso60.style.opacity = '0';
+    buf.style.opacity   = '0';
+    setTimeout(() => {
+      if (type === 'iso30') { iso30.style.transition='opacity .5s'; iso30.style.opacity='1'; }
+      if (type === 'iso60') {
+        iso30.style.transition='opacity .5s'; iso30.style.opacity='1';
+        iso60.style.transition='opacity .6s .1s'; iso60.style.opacity='1';
+      }
+      if (type === 'buf') { buf.style.transition='opacity .5s'; buf.style.opacity='1'; }
+    }, 50);
+  }
+  // Init
+  setTimeout(() => setIso('iso30', document.querySelector('.iso-btn.active')), 400);
+
+  // ── MAPA CDMX · ISÓCRONAS HOSPITALARIAS (D3 puro) ────────────────
+  (function () {
+    const container = document.getElementById('mapa-container');
+    const tt        = document.getElementById('cdmx-tt');
+    const loadDiv   = document.getElementById('cdmx-loading');
+    const svgEl     = document.getElementById('cdmx-svg');
+    const H = 420;
+
+    /* ── Datos hospitales públicos CDMX (pos en [lat, lng]) ────────────
+       8 hospitales distribuidos para cubrir distintas zonas de la ciudad */
+    const hospitales = [
+      /* CENTRO */
+      { nombre: 'Hospital General de México "Dr. Eduardo Liceaga"',
+        pos: [19.416, -99.151], nivel: 'SSa Federal', camas: 1078,
+        r30: 2.5, r60: 6.4,
+        dist: a => 0.16*Math.cos(2*a) - 0.22*Math.max(0,Math.cos(a-3.9)) },
+      { nombre: 'CMN Siglo XXI — IMSS',
+        pos: [19.406, -99.149], nivel: 'IMSS', camas: 1700,
+        r30: 2.3, r60: 5.9,
+        dist: a => 0.12*Math.sin(2*a) + 0.10*Math.cos(a+0.3) },
+      /* NORTE — Gustavo A. Madero */
+      { nombre: 'Hospital General "La Villa"',
+        pos: [19.489, -99.113], nivel: 'SSa CDMX', camas: 210,
+        r30: 3.0, r60: 7.0,
+        dist: a => 0.25*Math.cos(a+0.2) + 0.12*Math.sin(2*a) },
+      /* SUR-CENTRO — Benito Juárez */
+      { nombre: 'Hospital General "Dr. Gregorio Salas Flores" (Xoco)',
+        pos: [19.387, -99.165], nivel: 'SSa CDMX', camas: 290,
+        r30: 2.2, r60: 5.6,
+        dist: a => -0.28*Math.max(0,Math.cos(a-3.8)) + 0.12*Math.cos(a+1.0) },
+      /* ORIENTE — Iztapalapa */
+      { nombre: 'Hospital General de Iztapalapa',
+        pos: [19.357, -99.032], nivel: 'SSa CDMX', camas: 300,
+        r30: 2.0, r60: 5.2,
+        dist: a => 0.20*Math.cos(a+1.2) + 0.10*Math.sin(2*a+0.5) },
+      /* SURORIENTE — Tláhuac */
+      { nombre: 'Hospital General de Tláhuac',
+        pos: [19.308, -98.993], nivel: 'SSa CDMX', camas: 180,
+        r30: 1.8, r60: 4.2,
+        dist: a => 0.18*Math.cos(a+Math.PI) + 0.08*Math.sin(2*a) },
+      /* SUR — Tlalpan */
+      { nombre: 'INER — Inst. Nal. de Enfermedades Respiratorias',
+        pos: [19.290, -99.155], nivel: 'INER / SSa', camas: 540,
+        r30: 2.2, r60: 5.5,
+        dist: a => 0.12*Math.cos(a+0.5) + 0.15*Math.sin(a+0.8) },
+      /* PONIENTE — Álvaro Obregón */
+      { nombre: 'Hospital General "Dr. Enrique Cabrera"',
+        pos: [19.361, -99.209], nivel: 'SSa CDMX', camas: 280,
+        r30: 2.3, r60: 5.8,
+        dist: a => 0.18*Math.cos(2*a) + 0.08*Math.sin(a+1.2) }
+    ];
+
+    /* ── Generador de isócrona como GeoJSON Feature ─────────────────── */
+    // GeoJSON usa [lng, lat]; D3 geoPath proyecta directamente
+    function makeIsoGeoJSON(center, radioKm, distFn) {
+      const lat = center[0], lng = center[1];
+      const dLat = 1/111;
+      const dLng = 1/(111 * Math.cos(lat * Math.PI/180));
+      const n = 32;
+      const ring = Array.from({length: n}, (_, i) => {
+        const a = (i/n) * 2*Math.PI;
+        const r = radioKm * (1 + (distFn ? distFn(a) : 0));
+        return [lng + r*dLng*Math.sin(a), lat + r*dLat*Math.cos(a)];
+      });
+      ring.push(ring[0]);
+      return { type:'Feature', geometry:{ type:'Polygon', coordinates:[ring] }, properties:{} };
+    }
+
+    /* ── Helpers tooltip ─────────────────────────────────────────────── */
+    function showTT(event, html) {
+      tt.innerHTML = html;
+      tt.style.opacity = '1';
+      moveTT(event);
+    }
+    function moveTT(event) {
+      const r = container.getBoundingClientRect();
+      let tx = event.clientX - r.left + 12, ty = event.clientY - r.top - 14;
+      if (tx + 240 > r.width)  tx -= 254;
+      if (ty + 90  > r.height) ty -= 100;
+      tt.style.left = tx+'px'; tt.style.top = ty+'px';
+    }
+    function hideTT() { tt.style.opacity = '0'; }
+
+    /* ── Controlador de capas (global para onclick HTML) ─────────────── */
+    window.toggleLayer = function(id) {
+      const btn = document.getElementById('btn-'+id);
+      const isOn = btn.classList.toggle('off');
+      d3.selectAll('.layer-'+id).style('display', isOn ? 'none' : null);
+    };
+
+    /* ── Fetch estados de México → zoom a CDMX ──────────────────────── */
+    fetch('https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/mexico.geojson')
+      .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+      .then(geo => requestAnimationFrame(() => drawMap(geo)))
+      .catch(() => { loadDiv.innerHTML = '⚠️ Sin conexión — recarga la página.'; });
+
+    function drawMap(geo) {
+      loadDiv.style.display = 'none';
+      const W = Math.max(container.clientWidth, 320);
+      const svg = d3.select('#cdmx-svg')
+        .attr('viewBox', `0 0 ${W} ${H}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+
+      /* Aislar CDMX para centrar la proyección en ella */
+      const cdmx = geo.features.find(f =>
+        /ciudad de m[eé]xico|distrito federal/i.test(f.properties.name || '')
+      );
+      /* Proyección ajustada al polígono de CDMX con margen generoso */
+      const proj = d3.geoMercator()
+        .fitExtent([[24,24],[W-24,H-24]], cdmx || geo);
+      const path = d3.geoPath().projection(proj);
+
+      const g = svg.append('g');
+
+      /* ── Estados de México como fondo, CDMX resaltada ───────────── */
+      g.selectAll('.estado')
+        .data(geo.features)
+        .enter().append('path')
+          .attr('class','estado')
+          .attr('d', path)
+          .attr('fill', d => /ciudad de m[eé]xico|distrito federal/i.test(d.properties.name||'') ? '#172030' : '#0c1219')
+          .attr('stroke', d => /ciudad de m[eé]xico|distrito federal/i.test(d.properties.name||'') ? '#2a4060' : '#151e2a')
+          .attr('stroke-width', d => /ciudad de m[eé]xico|distrito federal/i.test(d.properties.name||'') ? 1.2 : 0.35)
+          .style('cursor','default')
+          .on('mouseover', function(event, d) {
+            if (!/ciudad de m[eé]xico|distrito federal/i.test(d.properties.name||'')) return;
+            showTT(event, `<strong>Ciudad de México</strong><div style="font-size:.75rem;color:#8b949e;margin-top:.15rem">8 hospitales públicos analizados</div>`);
+          })
+          .on('mousemove', moveTT)
+          .on('mouseout', hideTT);
+
+      /* ── Isócronas 60 min (debajo, borde punteado ámbar) ────────── */
+      hospitales.forEach(h => {
+        g.append('path')
+          .datum(makeIsoGeoJSON(h.pos, h.r60, h.dist))
+          .attr('class','layer-iso60')
+          .attr('d', path)
+          .attr('fill','#f59e0b').attr('fill-opacity', 0.11)
+          .attr('stroke','#d97706').attr('stroke-width', 1.8)
+          .attr('stroke-opacity', 0.9).attr('stroke-dasharray','6,3')
+          .style('cursor','pointer')
+          .on('mouseover', function(event) {
+            d3.select(this).attr('fill-opacity', 0.22);
+            showTT(event, `<strong>🏥 ${h.nombre}</strong>
+              <div style="color:#f59e0b;margin:.2rem 0;font-size:.8rem">⏱ Isócrona 60 min</div>
+              <div style="font-size:.76rem;color:#8b949e">${h.nivel} · ${h.camas} camas</div>`);
+          })
+          .on('mousemove', moveTT)
+          .on('mouseout', function() { d3.select(this).attr('fill-opacity', 0.11); hideTT(); });
+      });
+
+      /* ── Isócronas 30 min (encima, borde sólido verde) ──────────── */
+      hospitales.forEach(h => {
+        g.append('path')
+          .datum(makeIsoGeoJSON(h.pos, h.r30, h.dist))
+          .attr('class','layer-iso30')
+          .attr('d', path)
+          .attr('fill','#4ade80').attr('fill-opacity', 0.18)
+          .attr('stroke','#16a34a').attr('stroke-width', 1.8)
+          .attr('stroke-opacity', 0.95)
+          .style('cursor','pointer')
+          .on('mouseover', function(event) {
+            d3.select(this).attr('fill-opacity', 0.32);
+            showTT(event, `<strong>🏥 ${h.nombre}</strong>
+              <div style="color:#4ade80;margin:.2rem 0;font-size:.8rem">⏱ Isócrona 30 min</div>
+              <div style="font-size:.76rem;color:#8b949e">${h.nivel} · ${h.camas} camas</div>`);
+          })
+          .on('mousemove', moveTT)
+          .on('mouseout', function() { d3.select(this).attr('fill-opacity', 0.18); hideTT(); });
+      });
+
+      /* ── Marcadores de hospital (agrupados en g.layer-hosp) ─────── */
+      const hospLayer = g.append('g').attr('class','layer-hosp');
+      hospitales.forEach(h => {
+        const [px, py] = proj([h.pos[1], h.pos[0]]); // proj: [lng, lat]
+        // Halo
+        hospLayer.append('circle').attr('cx',px).attr('cy',py).attr('r',10)
+          .attr('fill','#ef4444').attr('fill-opacity',.16).attr('stroke','none').attr('pointer-events','none');
+        // Dot principal
+        hospLayer.append('circle').attr('cx',px).attr('cy',py).attr('r',5.5)
+          .attr('fill','#ef4444').attr('stroke','#fff').attr('stroke-width',1.8)
+          .style('cursor','pointer')
+          .on('mouseover', function(event) {
+            d3.select(this).attr('r',7.5);
+            showTT(event, `<strong>🏥 ${h.nombre}</strong>
+              <div style="font-size:.76rem;color:#8b949e;margin-top:.2rem">${h.nivel} · ${h.camas} camas</div>`);
+          })
+          .on('mousemove', moveTT)
+          .on('mouseout', function() { d3.select(this).attr('r',5.5); hideTT(); });
+        // Cruz
+        hospLayer.append('text').attr('x',px).attr('y',py).attr('text-anchor','middle')
+          .attr('dominant-baseline','middle').attr('font-size','7px')
+          .attr('fill','#fff').attr('font-weight','bold').attr('pointer-events','none').text('✚');
+      });
+
+      /* ── Leyenda SVG integrada ───────────────────────────────────── */
+      const leg = svg.append('g').attr('transform',`translate(12,${H-122})`);
+      leg.append('rect').attr('x',-6).attr('y',-8).attr('width',176).attr('height',116)
+        .attr('fill','rgba(13,17,23,.88)').attr('stroke','#30363d').attr('rx',8);
+      leg.append('text').attr('y',8).attr('fill','#e6edf3').attr('font-size','9px')
+        .attr('font-weight','700').attr('font-family','Segoe UI,sans-serif')
+        .attr('letter-spacing','.06em').text('ACCESIBILIDAD HOSPITALARIA');
+
+      const items = [
+        {y:24, type:'rect', fill:'#4ade80', dash:null,  label:'Isócrona 30 min'},
+        {y:42, type:'rect', fill:'#f59e0b', dash:'5,2', label:'Isócrona 60 min'},
+        {y:60, type:'rect', fill:'none',    dash:null,  label:'Sin cobertura <60 min', border:'#444'},
+        {y:78, type:'circ', fill:'#ef4444', label:'Hospital público'},
+      ];
+      items.forEach(it => {
+        if (it.type==='circ') {
+          leg.append('circle').attr('cx',7).attr('cy',it.y+4).attr('r',5)
+            .attr('fill',it.fill).attr('stroke','#fff').attr('stroke-width',1.5);
+        } else {
+          leg.append('rect').attr('x',0).attr('y',it.y).attr('width',14).attr('height',10)
+            .attr('fill',it.fill).attr('fill-opacity', it.fill==='none'?0:0.45)
+            .attr('stroke', it.border||it.fill).attr('stroke-width',1.5)
+            .attr('stroke-dasharray',it.dash||null).attr('rx',2);
+        }
+        leg.append('text').attr('x',20).attr('y',it.y+9).attr('fill','#8b949e')
+          .attr('font-size','9.5px').attr('font-family','Segoe UI,sans-serif').text(it.label);
+      });
+      leg.append('text').attr('y',102).attr('fill','#444').attr('font-size','8.5px')
+        .attr('font-family','Segoe UI,sans-serif').text('Isócronas aproximadas · ORS Tools');
+
+      /* ── Fuente ──────────────────────────────────────────────────── */
+      svg.append('text').attr('x',W-8).attr('y',H-5).attr('text-anchor','end')
+        .attr('fill','#3a4455').attr('font-size','8.5px').attr('font-family','Segoe UI,sans-serif')
+        .text('Fuente: SINAIS-SSA · OSM · INEGI');
+
+      /* ── Zoom / pan ──────────────────────────────────────────────── */
+      svg.call(d3.zoom().scaleExtent([1,9]).on('zoom', e => g.attr('transform', e.transform)));
+    }
+
+  })();
+
+  // ── HERO CANVAS ───────────────────────────────────
+  const canvas = document.getElementById('heroCanvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H, rings = [], pts = [];
+
+  function resize() {
+    const hero = canvas.parentElement;
+    W = canvas.width  = hero.offsetWidth;
+    H = canvas.height = hero.offsetHeight;
+    init();
+  }
+
+  function init() {
+    // Static points (hospital locations)
+    pts = Array.from({length:8}, () => ({
+      x: Math.random()*W, y: Math.random()*H,
+      nextRing: Math.random()*120
+    }));
+    rings = [];
+    // Particle field
+    window._particles = Array.from({length:60}, () => ({
+      x: Math.random()*W, y: Math.random()*H,
+      r: Math.random()*1.5+.4,
+      vx: (Math.random()-.5)*.2, vy: (Math.random()-.5)*.2
+    }));
+  }
+
+  function drawCanvas(ts) {
+    ctx.clearRect(0,0,W,H);
+
+    // Gradient bg
+    const g = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*.7);
+    g.addColorStop(0,'rgba(194,65,12,.07)');
+    g.addColorStop(1,'rgba(13,17,23,0)');
+    ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+    // Expanding rings from hospital points
+    pts.forEach(p => {
+      p.nextRing -= 1;
+      if (p.nextRing <= 0) {
+        rings.push({ x:p.x, y:p.y, r:0, maxR:80+Math.random()*60, speed:0.8+Math.random()*.4, color:Math.random()>.5?'251,146,60':'251,191,36' });
+        p.nextRing = 90 + Math.random()*60;
+      }
+    });
+
+    rings = rings.filter(r => r.r < r.maxR);
+    rings.forEach(r => {
+      r.r += r.speed;
+      const alpha = (1 - r.r/r.maxR) * .4;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.r, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(${r.color},${alpha})`;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    });
+
+    // Particle network
+    const p2 = window._particles || [];
+    p2.forEach((p,i) => {
+      p2.forEach((q,j) => {
+        if(j<=i) return;
+        const dx=p.x-q.x, dy=p.y-q.y, d=Math.sqrt(dx*dx+dy*dy);
+        if(d<90){ ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.strokeStyle=`rgba(251,146,60,${.07*(1-d/90)})`; ctx.lineWidth=.6; ctx.stroke(); }
+      });
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(251,146,60,.5)'; ctx.fill();
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W) p.vx*=-1;
+      if(p.y<0||p.y>H) p.vy*=-1;
+    });
+
+    // Hospital dots
+    pts.forEach(p => {
+      ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2);
+      ctx.fillStyle='rgba(251,146,60,.8)'; ctx.fill();
+    });
+
+    requestAnimationFrame(drawCanvas);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(drawCanvas);
+</script>
+</body>
+</html>

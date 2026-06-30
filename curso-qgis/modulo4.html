@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Módulo 4 · Correlación Espacial e Índices Territoriales</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --teal:    #0f766e;
+      --teal-c:  #14b8a6;
+      --teal-l:  #5eead4;
+      --rosa:    #db2777;
+      --rosa-c:  #f472b6;
+      --azul:    #1d4ed8;
+      --azul-c:  #60a5fa;
+      --rojo:    #dc2626;
+      --rojo-c:  #f87171;
+      --fondo:   #0d1117;
+      --fondo2:  #161b22;
+      --fondo3:  #1c2230;
+      --texto:   #e6edf3;
+      --sub:     #8b949e;
+      --borde:   #30363d;
+      --r:       12px;
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--fondo);color:var(--texto);line-height:1.65;overflow-x:hidden}
+    #progress{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--teal-c),var(--teal-l));z-index:200;transition:width .1s}
+
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,17,23,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--borde);display:flex;align-items:center;justify-content:space-between;padding:.75rem 2rem}
+    .nav-brand{font-size:.85rem;font-weight:700;color:var(--teal-c);letter-spacing:.04em}
+    .nav-links{display:flex;gap:1.5rem;list-style:none}
+    .nav-links a{font-size:.82rem;color:var(--sub);text-decoration:none;transition:color .2s}
+    .nav-links a:hover{color:var(--texto)}
+    @media(max-width:580px){.nav-links{display:none}}
+
+    /* HERO */
+    .hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:3rem 2rem;overflow:hidden}
+    .hero-canvas{position:absolute;inset:0;z-index:0;width:100%;height:100%;display:block}
+    .hero-content{position:relative;z-index:1;max-width:860px}
+    .badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(15,118,110,.22);border:1px solid rgba(20,184,166,.3);border-radius:999px;padding:.35rem 1rem;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--teal-c);margin-bottom:1.5rem;opacity:0;animation:fadeUp .6s .2s forwards}
+    h1{font-size:clamp(2.2rem,6vw,4rem);font-weight:800;line-height:1.1;background:linear-gradient(135deg,#fff 30%,var(--teal-l) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0;animation:fadeUp .7s .35s forwards}
+    .hero-sub{margin-top:1.2rem;font-size:1.15rem;color:var(--sub);max-width:620px;margin-inline:auto;opacity:0;animation:fadeUp .7s .5s forwards}
+    .hero-chips{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;margin-top:2rem;opacity:0;animation:fadeUp .7s .65s forwards}
+    .chip{display:flex;align-items:center;gap:.45rem;background:var(--fondo2);border:1px solid var(--borde);border-radius:999px;padding:.4rem 1rem;font-size:.85rem}
+    .chip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .dot-t{background:var(--teal-c)} .dot-r{background:var(--rojo-c)} .dot-a{background:var(--azul-c)} .dot-p{background:var(--rosa-c)}
+    .scroll-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;color:var(--sub);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;opacity:0;animation:fadeUp .7s 1.2s forwards}
+    .scroll-arrow{width:24px;height:24px;border-right:2px solid var(--sub);border-bottom:2px solid var(--sub);transform:rotate(45deg);animation:bounce 1.5s infinite}
+
+    /* SECTIONS */
+    section{padding:5rem 2rem}
+    .container{max-width:1060px;margin-inline:auto}
+    .section-label{font-size:.75rem;text-transform:uppercase;letter-spacing:.12em;color:var(--teal-c);font-weight:600;margin-bottom:.75rem}
+    .section-title{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:700;line-height:1.2;margin-bottom:1rem}
+    .section-desc{color:var(--sub);max-width:680px;font-size:1.05rem}
+    .divider{border:none;border-top:1px solid var(--borde)}
+
+    /* OBJETIVO */
+    .objetivo-box{background:linear-gradient(135deg,rgba(15,118,110,.13),rgba(20,184,166,.07));border:1px solid rgba(20,184,166,.22);border-radius:var(--r);padding:2.5rem;position:relative;overflow:hidden}
+    .objetivo-box::before{content:'';position:absolute;top:-60px;left:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(20,184,166,.1),transparent 70%)}
+    .objetivo-icon{width:52px;height:52px;background:linear-gradient(135deg,var(--teal),var(--teal-c));border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;font-size:1.5rem}
+    .objetivo-box p{font-size:1.1rem;line-height:1.75;position:relative;z-index:1}
+    .objetivo-box strong{color:var(--teal-c)}
+
+    /* TOBLER */
+    .tobler-box{background:var(--fondo2);border:1px solid var(--borde);border-radius:var(--r);padding:2rem;margin-top:2rem;position:relative;overflow:hidden}
+    .tobler-box::before{content:'"';position:absolute;top:-10px;left:16px;font-size:8rem;color:rgba(20,184,166,.08);font-family:Georgia,serif;line-height:1}
+    .tobler-quote{font-size:1.15rem;font-style:italic;color:var(--texto);line-height:1.7;position:relative;z-index:1;border-left:3px solid var(--teal-c);padding-left:1.25rem;margin-bottom:.75rem}
+    .tobler-cite{font-size:.82rem;color:var(--sub);position:relative;z-index:1}
+
+    /* CONCEPTOS */
+    #conceptos{background:var(--fondo2)}
+    .conceptos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem;margin-top:3rem}
+    .concepto-card{background:var(--fondo3);border:1px solid var(--borde);border-radius:var(--r);padding:1.75rem;position:relative;overflow:hidden;cursor:default;transition:transform .25s,border-color .25s,box-shadow .25s}
+    .concepto-card:hover{transform:translateY(-4px);border-color:var(--teal-c);box-shadow:0 8px 32px rgba(15,118,110,.2)}
+    .concepto-card::after{content:'';position:absolute;bottom:0;left:0;height:3px;width:100%;background:var(--gc,linear-gradient(90deg,var(--teal),var(--teal-c)));transform:scaleX(0);transform-origin:left;transition:transform .3s}
+    .concepto-card:hover::after{transform:scaleX(1)}
+    .concepto-num{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);margin-bottom:.6rem}
+    .concepto-card h3{font-size:1.05rem;font-weight:700;margin-bottom:.6rem}
+    .concepto-card p{font-size:.9rem;color:var(--sub);line-height:1.6}
+    .concepto-emoji{font-size:2rem;margin-bottom:.85rem;display:block}
+
+    /* MORAN SCATTER */
+    #moran{background:var(--fondo)}
+    .moran-wrap{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:2.5rem;align-items:start}
+    @media(max-width:720px){.moran-wrap{grid-template-columns:1fr}}
+    #scatter-box{background:var(--fondo2);border:1px solid var(--borde);border-radius:var(--r);padding:1rem;position:relative}
+    #scatter-box svg{display:block}
+    #scatter-tooltip{position:absolute;background:rgba(13,17,23,.95);border:1px solid var(--borde);border-radius:8px;padding:.5rem .85rem;font-size:.8rem;pointer-events:none;opacity:0;transition:opacity .15s;z-index:20;backdrop-filter:blur(6px);white-space:nowrap}
+    .scatter-legend{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem;justify-content:center}
+    .s-leg{display:flex;align-items:center;gap:.4rem;font-size:.78rem;color:var(--sub)}
+    .s-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    .moran-info{display:flex;flex-direction:column;gap:1rem}
+    .moran-i-box{background:var(--fondo2);border:1px solid var(--borde);border-radius:var(--r);padding:1.5rem;text-align:center}
+    .moran-i-val{font-size:3rem;font-weight:800;color:var(--teal-c);line-height:1}
+    .moran-i-lbl{font-size:.82rem;color:var(--sub);margin-top:.4rem}
+    .moran-i-interp{font-size:.88rem;color:var(--texto);margin-top:.75rem;line-height:1.6}
+    .quad-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+    .quad-card{background:var(--fondo2);border:1px solid var(--borde);border-radius:10px;padding:1rem}
+    .quad-card h4{font-size:.9rem;font-weight:700;margin-bottom:.3rem}
+    .quad-card p{font-size:.8rem;color:var(--sub);line-height:1.5}
+    .quad-hh{border-left:3px solid var(--rojo-c)}
+    .quad-ll{border-left:3px solid var(--azul-c)}
+    .quad-hl{border-left:3px solid var(--rosa-c)}
+    .quad-lh{border-left:3px solid #93c5fd}
+
+    /* TIMELINE */
+    #sesion{background:var(--fondo2)}
+    .timeline{margin-top:3rem;position:relative}
+    .timeline::before{content:'';position:absolute;left:28px;top:0;bottom:0;width:2px;background:linear-gradient(to bottom,var(--teal-c),var(--teal-l))}
+    .tl-item{display:flex;gap:1.5rem;margin-bottom:2.5rem;position:relative}
+    .tl-dot{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem;border:2px solid var(--borde);background:var(--fondo2);position:relative;z-index:1;transition:border-color .25s,background .25s}
+    .tl-item:hover .tl-dot{border-color:var(--teal-c);background:rgba(15,118,110,.14)}
+    .tl-body{flex:1;background:var(--fondo3);border:1px solid var(--borde);border-radius:var(--r);padding:1.25rem 1.5rem;transition:border-color .25s}
+    .tl-item:hover .tl-body{border-color:var(--teal-c)}
+    .tl-body h3{font-size:1rem;font-weight:700;margin-bottom:.35rem}
+    .tl-body p{font-size:.9rem;color:var(--sub)}
+    .tl-tag{display:inline-block;font-size:.72rem;background:rgba(20,184,166,.14);color:var(--teal-c);border-radius:4px;padding:.15rem .5rem;margin-bottom:.5rem}
+
+    /* TOOLS */
+    .tools-grid{display:flex;flex-wrap:wrap;gap:1rem;margin-top:2.5rem}
+    .tool-card{display:flex;align-items:center;gap:.85rem;background:var(--fondo2);border:1px solid var(--borde);border-radius:var(--r);padding:1rem 1.4rem;transition:border-color .25s,transform .2s;flex:1;min-width:200px}
+    .tool-card:hover{border-color:var(--teal-c);transform:translateY(-3px)}
+    .tool-icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--teal-c));display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+    .tool-info strong{display:block;font-size:.95rem}
+    .tool-info span{font-size:.82rem;color:var(--sub)}
+
+    /* ENTREGABLE */
+    #entregable{background:var(--fondo2)}
+    .entregable-wrap{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:3rem;align-items:start}
+    @media(max-width:760px){.entregable-wrap{grid-template-columns:1fr}}
+    .mapa-preview{border-radius:var(--r);overflow:hidden;position:relative;border:1px solid var(--borde);background:#0d1520;min-height:340px}
+    .mapa-preview svg{display:block;width:100%;height:100%}
+    #map-tooltip{position:absolute;background:rgba(13,17,23,.95);border:1px solid var(--borde);border-radius:8px;padding:.55rem .9rem;font-size:.82rem;pointer-events:none;opacity:0;transition:opacity .15s;z-index:20;max-width:210px;backdrop-filter:blur(6px)}
+    #map-tooltip strong{display:block;margin-bottom:.2rem;font-size:.85rem}
+    .tt-val{font-weight:600}
+    .tt-sub{font-size:.78rem;color:var(--sub);margin-top:.15rem}
+    .map-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.75rem;color:var(--sub);font-size:.88rem}
+    .map-spinner{width:28px;height:28px;border:3px solid var(--borde);border-top-color:var(--teal-c);border-radius:50%;animation:spin .8s linear infinite}
+    .map-legend{position:absolute;bottom:10px;left:10px;background:rgba(13,17,23,.88);border:1px solid var(--borde);border-radius:8px;padding:.6rem .85rem;font-size:.72rem;backdrop-filter:blur(4px);display:none}
+    .map-legend-title{color:var(--sub);margin-bottom:.45rem;letter-spacing:.05em;text-transform:uppercase;font-size:.68rem}
+    .legend-row{display:flex;align-items:center;gap:.45rem;margin-bottom:.3rem}
+    .legend-swatch{width:14px;height:14px;border-radius:3px;flex-shrink:0}
+    .map-source{position:absolute;bottom:10px;right:10px;font-size:.65rem;color:var(--sub);background:rgba(13,17,23,.75);padding:.25rem .5rem;border-radius:4px}
+    .map-error{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;color:var(--sub);font-size:.85rem;text-align:center;padding:1rem}
+    .entregable-info h3{font-size:1.35rem;font-weight:700;margin-bottom:1rem;line-height:1.3}
+    .entregable-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.25rem}
+    .etag{font-size:.8rem;padding:.3rem .8rem;border-radius:6px;border:1px solid var(--borde);color:var(--sub)}
+    .etag.t{border-color:var(--teal);color:var(--teal-c);background:rgba(15,118,110,.1)}
+    .etag.r{border-color:var(--rojo);color:var(--rojo-c);background:rgba(220,38,38,.1)}
+    .etag.a{border-color:var(--azul);color:var(--azul-c);background:rgba(29,78,216,.1)}
+    .criterio-box{background:var(--fondo3);border:1px solid var(--borde);border-left:3px solid var(--teal-c);border-radius:var(--r);padding:1.25rem 1.5rem;margin-top:1.5rem}
+    .criterio-box p{font-size:.9rem;color:var(--sub);line-height:1.65}
+    .stat-row{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.25rem}
+    .stat-box{flex:1;min-width:100px;background:var(--fondo3);border:1px solid var(--borde);border-radius:10px;padding:.85rem 1rem;text-align:center}
+    .stat-box .stat-val{font-size:1.15rem;font-weight:800;color:var(--teal-c)}
+    .stat-box .stat-lbl{font-size:.72rem;color:var(--sub);margin-top:.2rem}
+
+    /* BIBLIO */
+    #biblio{background:var(--fondo)}
+    .biblio-tabs{display:flex;gap:.5rem;margin-top:2.5rem;margin-bottom:1.5rem}
+    .tab-btn{padding:.5rem 1.2rem;border-radius:8px;border:1px solid var(--borde);background:transparent;color:var(--sub);font-size:.88rem;cursor:pointer;transition:all .2s}
+    .tab-btn.active,.tab-btn:hover{background:var(--teal);border-color:var(--teal);color:#fff}
+    .tab-panel{display:none} .tab-panel.active{display:block}
+    .ref-list{list-style:none}
+    .ref-item{display:flex;gap:1rem;padding:1rem 0;border-bottom:1px solid var(--borde);align-items:flex-start;transition:padding-left .2s}
+    .ref-item:hover{padding-left:.5rem} .ref-item:last-child{border-bottom:none}
+    .ref-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+    .ref-icon.teo{background:rgba(20,184,166,.15)} .ref-icon.tec{background:rgba(29,78,216,.15)}
+    .ref-body{flex:1}
+    .ref-body strong{font-size:.95rem;display:block;margin-bottom:.2rem}
+    .ref-body span{font-size:.83rem;color:var(--sub)}
+
+    footer{background:var(--fondo2);border-top:1px solid var(--borde);padding:2.5rem 2rem;text-align:center;color:var(--sub);font-size:.85rem}
+    footer strong{color:var(--texto)}
+
+    .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(6px)}}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<nav>
+  <span class="nav-brand">M4 · Correlación Espacial</span>
+  <ul class="nav-links">
+    <li><a href="#objetivo">Objetivo</a></li>
+    <li><a href="#conceptos">Conceptos</a></li>
+    <li><a href="#moran">Moran</a></li>
+    <li><a href="#sesion">Sesión</a></li>
+    <li><a href="#entregable">Entregable</a></li>
+    <li><a href="#biblio">Bibliografía</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <canvas class="hero-canvas" id="heroCanvas"></canvas>
+  <div class="hero-content">
+    <div class="badge">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+      Módulo 4 de 4 · Curso DGAPA 2026
+    </div>
+    <h1>Correlación Espacial<br>e Índices Territoriales</h1>
+    <p class="hero-sub">¿Están los clústeres económicos distribuidos al azar? El índice de Moran y los LISA responden — y el resultado siempre sorprende.</p>
+    <div class="hero-chips">
+      <span class="chip"><span class="chip-dot dot-t"></span>4 horas</span>
+      <span class="chip"><span class="chip-dot dot-r"></span>Índice de Moran global · LISA</span>
+      <span class="chip"><span class="chip-dot dot-a"></span>Matriz de pesos Queen · GeoDa</span>
+      <span class="chip"><span class="chip-dot dot-p"></span>Clústeres HH · LL · HL · LH</span>
+    </div>
+  </div>
+  <div class="scroll-hint">Explorar<div class="scroll-arrow"></div></div>
+</section>
+
+<hr class="divider"/>
+
+<!-- OBJETIVO -->
+<section id="objetivo">
+  <div class="container">
+    <p class="section-label reveal">Propósito del módulo</p>
+    <h2 class="section-title reveal">¿Qué vas a lograr?</h2>
+    <div class="objetivo-box reveal" style="margin-top:2rem">
+      <div class="objetivo-icon">📡</div>
+      <p>Que el participante <strong>comprenda el problema de la autocorrelación espacial como violación del supuesto de independencia en MCO</strong>, calcule el <strong>índice de Moran global y los indicadores LISA</strong> para identificar clústeres espaciales de actividad económica, y <strong>construya índices compuestos de desarrollo territorial</strong>.</p>
+    </div>
+
+    <!-- PRIMERA LEY DE TOBLER -->
+    <div class="tobler-box reveal">
+      <blockquote class="tobler-quote">
+        Everything is related to everything else, but near things are more related than distant things.
+      </blockquote>
+      <p class="tobler-cite">— Waldo Tobler (1970) · Primera Ley de la Geografía · El fundamento teórico de todo este módulo.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- CONCEPTOS -->
+<section id="conceptos">
+  <div class="container">
+    <p class="section-label reveal">Lo que necesitas saber</p>
+    <h2 class="section-title reveal">Conceptos clave</h2>
+    <p class="section-desc reveal">De la primera ley de Tobler a los clústeres LISA que identificarás en QGIS y GeoDa.</p>
+    <div class="conceptos-grid">
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#0f766e,#14b8a6)">
+        <span class="concepto-emoji">🌐</span>
+        <p class="concepto-num">Concepto 01</p>
+        <h3>Autocorrelación espacial</h3>
+        <p>Violación del supuesto de independencia de los errores en MCO: el valor de una variable en un lugar está correlacionado con sus vecinos. Ignorarla produce estimadores ineficientes y errores estándar sesgados.</p>
+      </div>
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#dc2626,#f87171)">
+        <span class="concepto-emoji">📐</span>
+        <p class="concepto-num">Concepto 02</p>
+        <h3>Índice de Moran Global (I)</h3>
+        <p>Estadístico entre −1 y +1 que mide la autocorrelación espacial de toda la región. I > 0: clústeres similares agrupados (concentración). I &lt; 0: tablero de ajedrez. I ≈ 0: distribución aleatoria.</p>
+      </div>
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#1d4ed8,#60a5fa)">
+        <span class="concepto-emoji">🗺️</span>
+        <p class="concepto-num">Concepto 03</p>
+        <h3>LISA — Indicadores Locales</h3>
+        <p>Local Indicators of Spatial Association (Anselin, 1988). Descomponen el Moran global en contribuciones locales: identifican dónde exactamente están los clústeres significativos y los valores atípicos espaciales.</p>
+      </div>
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#7c3aed,#a78bfa)">
+        <span class="concepto-emoji">🔲</span>
+        <p class="concepto-num">Concepto 04</p>
+        <h3>Matriz de pesos espaciales (Queen)</h3>
+        <p>Define quién es "vecino" de quién. Contigüidad Queen: comparte lado o vértice. Contigüidad Rook: solo lados. La elección de la matriz afecta directamente todos los resultados del análisis espacial.</p>
+      </div>
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#b45309,#fbbf24)">
+        <span class="concepto-emoji">📊</span>
+        <p class="concepto-num">Concepto 05</p>
+        <h3>Rezago espacial (spatial lag)</h3>
+        <p>Promedio ponderado del valor de los vecinos de cada unidad. En el diagrama de dispersión de Moran: eje Y = rezago espacial, eje X = valor estandarizado. La pendiente de la recta = Moran's I.</p>
+      </div>
+      <div class="concepto-card reveal" style="--gc:linear-gradient(90deg,#065f46,#34d399)">
+        <span class="concepto-emoji">🏗️</span>
+        <p class="concepto-num">Concepto 06</p>
+        <h3>Índices compuestos territoriales</h3>
+        <p>Combinación de múltiples variables (PIB, acceso a servicios, marginación) en un solo indicador mediante técnicas como componentes principales (PCA) o suma ponderada. Permiten comparar territorios multidimensionalmente.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- MORAN SCATTERPLOT INTERACTIVO -->
+<section id="moran">
+  <div class="container">
+    <p class="section-label reveal">Interactivo</p>
+    <h2 class="section-title reveal">Diagrama de dispersión de Moran</h2>
+    <p class="section-desc reveal">Cada punto es un estado mexicano. El eje X es el valor estandarizado de PIB per cápita; el eje Y, el rezago espacial (promedio de sus vecinos). Pasa el cursor sobre los puntos para identificarlos.</p>
+
+    <div class="moran-wrap">
+
+      <!-- SCATTER PLOT -->
+      <div id="scatter-box" class="reveal">
+        <svg id="scatter-svg"></svg>
+        <div id="scatter-tooltip"></div>
+        <div class="scatter-legend">
+          <div class="s-leg"><div class="s-dot" style="background:#ef4444"></div>HH — Hot spot</div>
+          <div class="s-leg"><div class="s-dot" style="background:#3b82f6"></div>LL — Cold spot</div>
+          <div class="s-leg"><div class="s-dot" style="background:#f472b6"></div>HL — Outlier alto</div>
+          <div class="s-leg"><div class="s-dot" style="background:#93c5fd"></div>LH — Outlier bajo</div>
+          <div class="s-leg"><div class="s-dot" style="background:#4b5563"></div>No significativo</div>
+        </div>
+      </div>
+
+      <!-- PANEL DERECHO -->
+      <div class="moran-info">
+        <div class="moran-i-box reveal">
+          <div class="moran-i-val">I = 0.42</div>
+          <div class="moran-i-lbl">Índice de Moran Global · PIB per cápita estatal</div>
+          <div class="moran-i-interp">Autocorrelación espacial positiva y estadísticamente significativa (p &lt; 0.01). Los estados ricos tienden a ser vecinos de estados ricos, y los estados pobres de estados pobres.</div>
+        </div>
+        <div class="quad-grid reveal">
+          <div class="quad-card quad-hh">
+            <h4 style="color:#ef4444">HH · Hot spots</h4>
+            <p>Alto PIB rodeado de vecinos con alto PIB. Clúster del norte: NL, Coahuila, Tamaulipas, BC, Sonora.</p>
+          </div>
+          <div class="quad-card quad-ll">
+            <h4 style="color:#3b82f6">LL · Cold spots</h4>
+            <p>Bajo PIB rodeado de vecinos pobres. Clúster del sur: Chiapas, Oaxaca, Guerrero, Veracruz.</p>
+          </div>
+          <div class="quad-card quad-hl">
+            <h4 style="color:#f472b6">HL · Outlier alto</h4>
+            <p>Alto PIB pero vecinos pobres. Campeche (petróleo), CDMX y Querétaro son ejemplos.</p>
+          </div>
+          <div class="quad-card quad-lh">
+            <h4 style="color:#93c5fd">LH · Outlier bajo</h4>
+            <p>Bajo PIB rodeado de vecinos ricos. Hidalgo y Tlaxcala entre el corredor de alta productividad.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- TIMELINE -->
+<section id="sesion">
+  <div class="container">
+    <p class="section-label reveal">Estructura de la sesión</p>
+    <h2 class="section-title reveal">¿Cómo está organizado el módulo?</h2>
+    <p class="section-desc reveal">4 horas en dos sesiones. Al final interpretarás un mapa de clústeres LISA con lenguaje econométrico y cartográfico.</p>
+    <div class="timeline reveal">
+      <div class="tl-item">
+        <div class="tl-dot">📐</div>
+        <div class="tl-body">
+          <span class="tl-tag">Sesión 1 · Hora 1</span>
+          <h3>Tobler, dependencia espacial y sus consecuencias en MCO</h3>
+          <p>Primera Ley de la Geografía. ¿Por qué la dependencia espacial viola los supuestos de OLS? Tipos de autocorrelación: positiva (concentración) vs negativa (dispersión). Intuición del estadístico de Moran.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🔲</div>
+        <div class="tl-body">
+          <span class="tl-tag">Sesión 1 · Hora 2</span>
+          <h3>Matriz de pesos Queen e Índice de Moran global en GeoDa</h3>
+          <p>Construcción de la matriz de pesos espaciales Queen en GeoDa: Tools → Weights Manager. Cálculo del Índice de Moran global: Space → Univariate Moran's I. Interpretación del diagrama de dispersión e inferencia (permutation test).</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🗺️</div>
+        <div class="tl-body">
+          <span class="tl-tag">Sesión 2 · Hora 3</span>
+          <h3>Indicadores LISA y mapa de clústeres</h3>
+          <p>Space → Univariate LISA. Interpretación de los 4 cuadrantes en el mapa: HH (rojo), LL (azul), HL (rosa), LH (azul claro). Significancia estadística: ¿qué clústeres son robustos? Exportar resultados a QGIS.</p>
+        </div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">🏗️</div>
+        <div class="tl-body">
+          <span class="tl-tag">Sesión 2 · Hora 4</span>
+          <h3>Índice compuesto territorial + layout final</h3>
+          <p>Construcción de índice compuesto con SAGA (Processing SAGA): normalización de variables (PIB, marginación, accesibilidad), suma ponderada en calculadora raster. Layout del mapa LISA con análisis estadístico incluido. Discusión: ¿qué políticas implica el patrón espacial encontrado?</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- HERRAMIENTAS -->
+<section style="padding:4rem 2rem;background:var(--fondo)">
+  <div class="container">
+    <p class="section-label reveal">Software del módulo</p>
+    <h2 class="section-title reveal">Herramientas que usarás</h2>
+    <div class="tools-grid">
+      <div class="tool-card reveal"><div class="tool-icon">🟦</div><div class="tool-info"><strong>GeoDa 1.22</strong><span>Moran global · LISA · Matriz de pesos</span></div></div>
+      <div class="tool-card reveal"><div class="tool-icon">🟢</div><div class="tool-info"><strong>QGIS 3.28 LTR</strong><span>Visualización de resultados y layout</span></div></div>
+      <div class="tool-card reveal"><div class="tool-icon">⚙️</div><div class="tool-info"><strong>Processing SAGA</strong><span>Índice compuesto · Calculadora raster</span></div></div>
+      <div class="tool-card reveal"><div class="tool-icon">🏛️</div><div class="tool-info"><strong>INEGI · DENUE</strong><span>VAB municipal · Censos Económicos 2019</span></div></div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- ENTREGABLE -->
+<section id="entregable">
+  <div class="container">
+    <p class="section-label reveal">Producto esperado</p>
+    <h2 class="section-title reveal">Tu entregable del módulo</h2>
+    <div class="entregable-wrap">
+
+      <div class="mapa-preview reveal" id="mapa-container">
+        <div class="map-loading" id="map-loading"><div class="map-spinner"></div>Cargando mapa LISA…</div>
+        <div class="map-error" id="map-error">⚠️ No se pudo cargar el mapa.</div>
+        <svg id="mexico-map"></svg>
+        <div id="map-tooltip">
+          <strong id="tt-name"></strong>
+          <div class="tt-val" id="tt-val"></div>
+          <div class="tt-sub" id="tt-sub"></div>
+        </div>
+        <div class="map-legend" id="map-legend">
+          <div class="map-legend-title">Clústeres LISA</div>
+        </div>
+        <div class="map-source">Fuente: INEGI · GeoDa · Moran's I = 0.42</div>
+      </div>
+
+      <div class="entregable-info reveal">
+        <h3>Mapa de clústeres LISA de actividad económica con análisis estadístico</h3>
+        <p style="color:var(--sub);font-size:.93rem;line-height:1.7;">
+          Tu mapa final incluirá las zonas de clústeres significativos (HH, LL, HL, LH) y las áreas no significativas,
+          acompañadas de una nota estadística con el valor del Índice de Moran y el p-value del permutation test.
+          El patrón norteño vs sureño es uno de los hallazgos más robustos de la geografía económica mexicana.
+        </p>
+        <div class="stat-row">
+          <div class="stat-box"><div class="stat-val">I=0.42</div><div class="stat-lbl">Moran global</div></div>
+          <div class="stat-box"><div class="stat-val">p&lt;0.01</div><div class="stat-lbl">Significancia</div></div>
+          <div class="stat-box"><div class="stat-val">999</div><div class="stat-lbl">Permutaciones</div></div>
+        </div>
+        <div class="entregable-tags">
+          <span class="etag r">HH · Cold & Hot spots</span>
+          <span class="etag a">LL · Cold spots</span>
+          <span class="etag t">Outliers HL · LH</span>
+          <span class="etag">Moran's I incluido</span>
+          <span class="etag">p-value reportado</span>
+        </div>
+        <div class="criterio-box">
+          <p><strong style="color:var(--teal-c)">Criterio de evaluación:</strong><br>
+          Calcular e interpretar el índice de Moran global y los indicadores LISA para identificar clústeres espaciales de actividad económica, utilizando GeoDa en integración con QGIS.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="divider"/>
+
+<!-- BIBLIO -->
+<section id="biblio">
+  <div class="container">
+    <p class="section-label reveal">Lecturas del módulo</p>
+    <h2 class="section-title reveal">Bibliografía</h2>
+    <div class="biblio-tabs reveal">
+      <button class="tab-btn active" onclick="switchTab('consultada',this)">Consultada</button>
+      <button class="tab-btn" onclick="switchTab('sugerida',this)">Sugerida</button>
+    </div>
+    <div id="consultada" class="tab-panel active">
+      <ul class="ref-list">
+        <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Tobler, W. (1970). A Computer Movie Simulating Urban Growth in the Detroit Region.</strong><span>Economic Geography, 46(s1), 234–240. · Teórica — Primera Ley de la Geografía</span></div></li>
+        <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Anselin, L. (1988). Spatial Econometrics: Methods and Models.</strong><span>Kluwer Academic Publishers. · Teórica — fundamento de toda la econometría espacial</span></div></li>
+        <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Moreno, R. & Vayá, E. (2002). Técnicas econométricas para el tratamiento de la dependencia espacial en Ciencias Sociales.</strong><span>Edicions UB. · Teórica</span></div></li>
+        <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>Anselin, L., Syabri, I. & Kho, Y. (2006). GeoDa: An Introduction to Spatial Data Analysis.</strong><span>Geographical Analysis, 38(1), 5–22. · Técnica</span></div></li>
+        <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>Bivand, R., Pebesma, E. & Gómez-Rubio, V. (2013). Applied Spatial Data Analysis with R.</strong><span>Springer. Capítulo 9. · Técnica</span></div></li>
+        <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>GeoDa Center (2024). GeoDa Workbook.</strong><span>geodacenter.github.io · Técnica</span></div></li>
+      </ul>
+    </div>
+    <div id="sugerida" class="tab-panel">
+      <ul class="ref-list">
+        <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Anselin, L. (1988). Spatial Econometrics: Methods and Models.</strong><span>Kluwer Academic Publishers. · Referencia fundamental — leer caps. 1 y 2</span></div></li>
+        <li class="ref-item"><div class="ref-icon teo">📖</div><div class="ref-body"><strong>Moreno, R. & Vayá, E. (2002). Técnicas econométricas para el tratamiento de la dependencia espacial en Ciencias Sociales.</strong><span>Edicions UB. · En español, accesible para el contexto latinoamericano</span></div></li>
+        <li class="ref-item"><div class="ref-icon tec">💻</div><div class="ref-body"><strong>Anselin, L., Syabri, I. & Kho, Y. (2006). GeoDa: An Introduction to Spatial Data Analysis.</strong><span>Geographical Analysis, 38(1), 5–22. · Tutorial esencial de GeoDa</span></div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p><strong>Curso DGAPA 2026</strong> · Análisis Espacial para el Desarrollo Regional con QGIS</p>
+  <p style="margin-top:.4rem;">Módulo 4 de 4 · 4 horas · Carlos David García Hernández · Facultad de Economía UNAM</p>
+</footer>
+
+<script>
+  // PROGRESS
+  window.addEventListener('scroll',()=>{
+    document.getElementById('progress').style.width=
+      (window.scrollY/(document.body.scrollHeight-window.innerHeight)*100)+'%';
+  });
+  // REVEAL
+  const revObs=new IntersectionObserver(entries=>{
+    entries.forEach((e,i)=>{ if(e.isIntersecting) setTimeout(()=>e.target.classList.add('visible'),i*60); });
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+  // TABS
+  function switchTab(id,btn){
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById(id).classList.add('active'); btn.classList.add('active');
+  }
+
+  // ── MORAN SCATTERPLOT ───────────────────────────────────────────
+  const moranData = [
+    {name:'Nuevo León',      z:1.42,  lag:0.85,  type:'HH'},
+    {name:'Coahuila',        z:0.58,  lag:0.62,  type:'HH'},
+    {name:'Tamaulipas',      z:0.33,  lag:0.55,  type:'HH'},
+    {name:'Baja California', z:0.17,  lag:0.45,  type:'HH'},
+    {name:'Sonora',          z:0.42,  lag:0.48,  type:'HH'},
+    {name:'Chihuahua',       z:0.50,  lag:0.40,  type:'HH'},
+    {name:'Chiapas',         z:-1.22, lag:-0.92, type:'LL'},
+    {name:'Oaxaca',          z:-1.12, lag:-0.85, type:'LL'},
+    {name:'Guerrero',        z:-1.08, lag:-0.78, type:'LL'},
+    {name:'Veracruz',        z:-0.75, lag:-0.82, type:'LL'},
+    {name:'Michoacán',       z:-0.88, lag:-0.65, type:'LL'},
+    {name:'Puebla',          z:-0.78, lag:-0.70, type:'LL'},
+    {name:'Campeche',        z:3.25,  lag:-0.52, type:'HL'},
+    {name:'Ciudad de México',z:2.83,  lag:-0.45, type:'HL'},
+    {name:'Querétaro',       z:0.83,  lag:-0.40, type:'HL'},
+    {name:'Hidalgo',         z:-0.95, lag:0.25,  type:'LH'},
+    {name:'Tlaxcala',        z:-0.72, lag:0.18,  type:'LH'},
+    {name:'Jalisco',         z:0.08,  lag:-0.12, type:'NS'},
+    {name:'Estado de México',z:-0.45, lag:0.08,  type:'NS'},
+    {name:'Guanajuato',      z:-0.58, lag:-0.15, type:'NS'},
+    {name:'Aguascalientes',  z:0.25,  lag:-0.08, type:'NS'},
+    {name:'Sinaloa',         z:-0.17, lag:0.05,  type:'NS'},
+    {name:'Nayarit',         z:-0.33, lag:-0.05, type:'NS'},
+    {name:'Durango',         z:-0.50, lag:-0.10, type:'NS'},
+    {name:'Zacatecas',       z:-0.62, lag:-0.20, type:'NS'},
+    {name:'San Luis Potosí', z:-0.55, lag:-0.18, type:'NS'},
+    {name:'Tabasco',         z:-0.83, lag:-0.55, type:'NS'},
+    {name:'Yucatán',         z:-0.47, lag:-0.10, type:'NS'},
+    {name:'Morelos',         z:-0.42, lag:0.12,  type:'NS'},
+    {name:'Colima',          z:0.00,  lag:-0.08, type:'NS'},
+    {name:'Baja California Sur',z:0.67, lag:0.35,type:'NS'},
+    {name:'Quintana Roo',    z:-0.25, lag:-0.15, type:'NS'},
+  ];
+
+  const typeColors={HH:'#ef4444',LL:'#3b82f6',HL:'#f472b6',LH:'#93c5fd',NS:'#4b5563'};
+  const typeLabels={HH:'HH — Hot spot',LL:'LL — Cold spot',HL:'HL — Outlier alto',LH:'LH — Outlier bajo',NS:'No significativo'};
+
+  function drawScatter(){
+    const box=document.getElementById('scatter-box');
+    const W=box.clientWidth-32, H=Math.min(W,380);
+    const pad={top:24,right:20,bottom:48,left:48};
+    const iW=W-pad.left-pad.right, iH=H-pad.top-pad.bottom;
+
+    const xScale=d3.scaleLinear().domain([-1.5,3.5]).range([0,iW]);
+    const yScale=d3.scaleLinear().domain([-1.1,1.0]).range([iH,0]);
+
+    const svg=d3.select('#scatter-svg').attr('viewBox',`0 0 ${W} ${H}`).attr('height',H);
+    svg.selectAll('*').remove();
+    const g=svg.append('g').attr('transform',`translate(${pad.left},${pad.top})`);
+
+    // Quadrant backgrounds
+    const qPad=0;
+    g.append('rect').attr('x',xScale(0)).attr('y',qPad).attr('width',iW-xScale(0)).attr('height',yScale(0)-qPad).attr('fill','rgba(239,68,68,.05)');
+    g.append('rect').attr('x',qPad).attr('y',yScale(0)).attr('width',xScale(0)-qPad).attr('height',iH-yScale(0)).attr('fill','rgba(59,130,246,.05)');
+    g.append('rect').attr('x',xScale(0)).attr('y',yScale(0)).attr('width',iW-xScale(0)).attr('height',iH-yScale(0)).attr('fill','rgba(244,114,182,.04)');
+    g.append('rect').attr('x',qPad).attr('y',qPad).attr('width',xScale(0)-qPad).attr('height',yScale(0)-qPad).attr('fill','rgba(147,197,253,.04)');
+
+    // Axes
+    g.append('line').attr('x1',0).attr('y1',yScale(0)).attr('x2',iW).attr('y2',yScale(0)).attr('stroke','#374151').attr('stroke-width',1);
+    g.append('line').attr('x1',xScale(0)).attr('y1',0).attr('x2',xScale(0)).attr('y2',iH).attr('stroke','#374151').attr('stroke-width',1);
+
+    // Axis labels
+    g.append('text').attr('x',iW/2).attr('y',iH+38).attr('text-anchor','middle').attr('fill','#8b949e').attr('font-size',11).text('PIB pc estandarizado (z)');
+    g.append('text').attr('transform','rotate(-90)').attr('x',-iH/2).attr('y',-34).attr('text-anchor','middle').attr('fill','#8b949e').attr('font-size',11).text('Rezago espacial');
+
+    // Grid
+    [-1,0,1,2,3].forEach(v=>{
+      g.append('line').attr('x1',xScale(v)).attr('y1',0).attr('x2',xScale(v)).attr('y2',iH).attr('stroke','#30363d').attr('stroke-width',.5).attr('stroke-dasharray','3,3');
+      g.append('text').attr('x',xScale(v)).attr('y',iH+14).attr('text-anchor','middle').attr('fill','#4b5563').attr('font-size',9).text(v);
+    });
+    [-1,-.5,0,.5,1].forEach(v=>{
+      g.append('line').attr('x1',0).attr('y1',yScale(v)).attr('x2',iW).attr('y2',yScale(v)).attr('stroke','#30363d').attr('stroke-width',.5).attr('stroke-dasharray','3,3');
+      g.append('text').attr('x',-6).attr('y',yScale(v)+4).attr('text-anchor','end').attr('fill','#4b5563').attr('font-size',9).text(v);
+    });
+
+    // Regression line (Moran's I ≈ 0.42)
+    const x0=xScale(-1.5), x1=xScale(3.5);
+    const y0=yScale(-1.5*0.42), y1=yScale(3.5*0.42);
+    g.append('line').attr('x1',x0).attr('y1',y0).attr('x2',x1).attr('y2',y1)
+      .attr('stroke','#14b8a6').attr('stroke-width',1.5).attr('stroke-dasharray','6,3').attr('opacity',.7);
+    g.append('text').attr('x',x1-4).attr('y',y1-6).attr('text-anchor','end').attr('fill','#14b8a6').attr('font-size',9).text('I = 0.42');
+
+    // Quadrant labels
+    g.append('text').attr('x',iW-8).attr('y',12).attr('text-anchor','end').attr('fill','rgba(239,68,68,.5)').attr('font-size',10).attr('font-weight','bold').text('HH');
+    g.append('text').attr('x',8).attr('y',iH-6).attr('fill','rgba(59,130,246,.5)').attr('font-size',10).attr('font-weight','bold').text('LL');
+    g.append('text').attr('x',iW-8).attr('y',iH-6).attr('text-anchor','end').attr('fill','rgba(244,114,182,.5)').attr('font-size',10).attr('font-weight','bold').text('HL');
+    g.append('text').attr('x',8).attr('y',12).attr('fill','rgba(147,197,253,.5)').attr('font-size',10).attr('font-weight','bold').text('LH');
+
+    // Points
+    const tt=document.getElementById('scatter-tooltip');
+    g.selectAll('circle').data(moranData).enter().append('circle')
+      .attr('cx',d=>xScale(d.z))
+      .attr('cy',d=>yScale(d.lag))
+      .attr('r',d=>d.type==='NS'?4:5.5)
+      .attr('fill',d=>typeColors[d.type])
+      .attr('opacity',d=>d.type==='NS'?.55:.9)
+      .attr('stroke',d=>d.type==='NS'?'none':'rgba(255,255,255,.3)')
+      .attr('stroke-width',1)
+      .style('cursor','pointer')
+      .on('mouseover',function(event,d){
+        d3.select(this).attr('r',8).attr('opacity',1).attr('stroke','#fff').attr('stroke-width',1.5);
+        tt.innerHTML=`<strong style="color:${typeColors[d.type]}">${d.name}</strong>
+          <span style="color:#8b949e;font-size:.78rem;display:block">${typeLabels[d.type]}</span>
+          <span style="color:#e6edf3;font-size:.8rem">z = ${d.z.toFixed(2)} · lag = ${d.lag.toFixed(2)}</span>`;
+        tt.style.opacity='1';
+      })
+      .on('mousemove',function(event){
+        const rect=document.getElementById('scatter-box').getBoundingClientRect();
+        let tx=event.clientX-rect.left+12, ty=event.clientY-rect.top-12;
+        if(tx+180>rect.width) tx-=192;
+        tt.style.left=tx+'px'; tt.style.top=ty+'px';
+      })
+      .on('mouseout',function(event,d){
+        d3.select(this).attr('r',d.type==='NS'?4:5.5).attr('opacity',d.type==='NS'?.55:.9).attr('stroke',d.type==='NS'?'none':'rgba(255,255,255,.3)').attr('stroke-width',1);
+        tt.style.opacity='0';
+      });
+  }
+
+  setTimeout(drawScatter,300);
+  window.addEventListener('resize',drawScatter);
+
+  // ── MAPA LISA ───────────────────────────────────────────────────
+  (function(){
+    const LISA={
+      'Aguascalientes':'NS','Baja California':'HH','Baja California Sur':'NS',
+      'Campeche':'HL','Chiapas':'LL','Chihuahua':'HH','Ciudad de México':'HL',
+      'Coahuila de Zaragoza':'HH','Colima':'NS','Durango':'NS',
+      'Guanajuato':'NS','Guerrero':'LL','Hidalgo':'LH','Jalisco':'NS',
+      'México':'NS','Michoacán de Ocampo':'LL','Morelos':'NS','Nayarit':'NS',
+      'Nuevo León':'HH','Oaxaca':'LL','Puebla':'LL','Querétaro':'HL',
+      'Quintana Roo':'NS','San Luis Potosí':'NS','Sinaloa':'NS',
+      'Sonora':'HH','Tabasco':'NS','Tamaulipas':'HH','Tlaxcala':'LH',
+      'Veracruz de Ignacio de la Llave':'LL','Yucatán':'NS','Zacatecas':'NS'
+    };
+    const lisaColors={HH:'#ef4444',LL:'#3b82f6',HL:'#f472b6',LH:'#93c5fd',NS:'#2d3748'};
+    const lisaLabels={HH:'HH — Hot spot',LL:'LL — Cold spot',HL:'HL — Outlier alto',LH:'LH — Outlier bajo',NS:'No significativo'};
+
+    function lookup(n){
+      if(LISA[n]) return LISA[n];
+      for(const [k,v] of Object.entries(LISA))
+        if(k.toLowerCase().startsWith((n||'').toLowerCase().split(' ')[0])) return v;
+      return 'NS';
+    }
+
+    const legend=document.getElementById('map-legend');
+    Object.entries(lisaLabels).forEach(([k,label])=>{
+      const row=document.createElement('div'); row.className='legend-row';
+      row.innerHTML=`<span class="legend-swatch" style="background:${lisaColors[k]}"></span><span style="color:#8b949e;font-size:.7rem">${label}</span>`;
+      legend.appendChild(row);
+    });
+
+    const container=document.getElementById('mapa-container');
+    fetch('https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/mexico.geojson')
+      .then(r=>{if(!r.ok)throw new Error();return r.json();})
+      .then(geo=>{
+        document.getElementById('map-loading').style.display='none';
+        document.getElementById('map-legend').style.display='block';
+        const W=container.clientWidth, H=Math.max(container.clientHeight,340);
+        const proj=d3.geoMercator().fitExtent([[12,12],[W-12,H-12]],geo);
+        const path=d3.geoPath().projection(proj);
+        const svg=d3.select('#mexico-map').attr('viewBox',`0 0 ${W} ${H}`).attr('preserveAspectRatio','xMidYMid meet');
+        const defs=svg.append('defs');
+        const f=defs.append('filter').attr('id','sh4');
+        f.append('feDropShadow').attr('dx',0).attr('dy',1).attr('stdDeviation',2).attr('flood-color','rgba(0,0,0,.4)');
+        const g=svg.append('g');
+        const tt=document.getElementById('map-tooltip');
+        g.selectAll('path').data(geo.features).enter().append('path')
+          .attr('d',path)
+          .attr('fill',d=>lisaColors[lookup(d.properties.name||'')])
+          .attr('stroke','#0d1117').attr('stroke-width',.7)
+          .attr('filter','url(#sh4)').style('cursor','pointer')
+          .on('mouseover',function(event,d){
+            const name=d.properties.name||'';
+            const type=lookup(name);
+            d3.select(this).raise().attr('stroke','#fff').attr('stroke-width',1.8);
+            document.getElementById('tt-name').textContent=name||'Estado';
+            document.getElementById('tt-val').style.color=lisaColors[type];
+            document.getElementById('tt-val').textContent=lisaLabels[type];
+            document.getElementById('tt-sub').textContent=type==='HH'?'Clúster alto-alto significativo':type==='LL'?'Clúster bajo-bajo significativo':type==='HL'?'Valor alto, vecinos bajos':type==='LH'?'Valor bajo, vecinos altos':'Sin significancia estadística';
+            tt.style.opacity='1';
+          })
+          .on('mousemove',function(event){
+            const rect=container.getBoundingClientRect();
+            let tx=event.clientX-rect.left+14, ty=event.clientY-rect.top-14;
+            if(tx+210>rect.width) tx-=224;
+            if(ty+80>rect.height) ty-=90;
+            tt.style.left=tx+'px'; tt.style.top=ty+'px';
+          })
+          .on('mouseout',function(){
+            d3.select(this).attr('stroke','#0d1117').attr('stroke-width',.7);
+            tt.style.opacity='0';
+          });
+        svg.call(d3.zoom().scaleExtent([1,6]).on('zoom',e=>g.attr('transform',e.transform)));
+      })
+      .catch(()=>{
+        document.getElementById('map-loading').style.display='none';
+        document.getElementById('map-error').style.display='flex';
+      });
+  })();
+
+  // ── HERO CANVAS (scatter plot estético) ─────────────────────────
+  const canvas=document.getElementById('heroCanvas');
+  const ctx=canvas.getContext('2d');
+  let W,H,pts=[];
+
+  function resize(){
+    const hero=canvas.parentElement;
+    W=canvas.width=hero.offsetWidth;
+    H=canvas.height=hero.offsetHeight;
+    pts=Array.from({length:55},()=>({
+      x:Math.random()*W, y:Math.random()*H,
+      r:Math.random()*2+.5,
+      vx:(Math.random()-.5)*.18, vy:(Math.random()-.5)*.18,
+      type:['HH','LL','HL','LH','NS','NS','NS'][Math.floor(Math.random()*7)]
+    }));
+  }
+
+  const hColors={HH:'239,68,68',LL:'59,130,246',HL:'244,114,182',LH:'147,197,253',NS:'75,85,99'};
+
+  function drawCanvas(){
+    ctx.clearRect(0,0,W,H);
+    const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*.7);
+    g.addColorStop(0,'rgba(15,118,110,.07)');
+    g.addColorStop(1,'rgba(13,17,23,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+    // Axes suggestion
+    ctx.beginPath(); ctx.moveTo(W*.1,H*.5); ctx.lineTo(W*.9,H*.5);
+    ctx.strokeStyle='rgba(55,65,81,.3)'; ctx.lineWidth=1; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W*.5,H*.1); ctx.lineTo(W*.5,H*.9);
+    ctx.stroke();
+
+    pts.forEach((p,i)=>{
+      pts.forEach((q,j)=>{
+        if(j<=i||p.type==='NS'||q.type==='NS') return;
+        const dx=p.x-q.x,dy=p.y-q.y,d=Math.sqrt(dx*dx+dy*dy);
+        if(d<100){
+          ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
+          ctx.strokeStyle=`rgba(${hColors[p.type]},.08)`; ctx.lineWidth=.6; ctx.stroke();
+        }
+      });
+      const alpha=p.type==='NS'?.3:.75;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${hColors[p.type]},${alpha})`; ctx.fill();
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W) p.vx*=-1;
+      if(p.y<0||p.y>H) p.vy*=-1;
+    });
+    requestAnimationFrame(drawCanvas);
+  }
+
+  window.addEventListener('resize',resize);
+  resize();
+  drawCanvas();
+</script>
+</body>
+</html>

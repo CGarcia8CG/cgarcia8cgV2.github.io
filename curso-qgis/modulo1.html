@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Módulo 1 · Fundamentos SIG y Geografía Económica</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <style>
+    /* ─── RESET & BASE ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --azul:    #1a6bb5;
+      --azul-c:  #2a85d8;
+      --verde:   #1e9e6b;
+      --verde-c: #27c985;
+      --oro:     #e8a020;
+      --fondo:   #0d1117;
+      --fondo2:  #161b22;
+      --fondo3:  #1c2230;
+      --texto:   #e6edf3;
+      --sub:     #8b949e;
+      --borde:   #30363d;
+      --r:       12px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--fondo);
+      color: var(--texto);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    /* ─── HERO ──────────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 3rem 2rem;
+      overflow: hidden;
+    }
+    .hero-canvas {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 860px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: rgba(26,107,181,.25);
+      border: 1px solid rgba(42,133,216,.4);
+      border-radius: 999px;
+      padding: .35rem 1rem;
+      font-size: .8rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--azul-c);
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeUp .6s .2s forwards;
+    }
+    .badge svg { width:14px; height:14px; }
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #fff 30%, var(--azul-c) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0;
+      animation: fadeUp .7s .35s forwards;
+    }
+    .hero-sub {
+      margin-top: 1.2rem;
+      font-size: 1.15rem;
+      color: var(--sub);
+      max-width: 600px;
+      margin-inline: auto;
+      opacity: 0;
+      animation: fadeUp .7s .5s forwards;
+    }
+    .hero-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .75rem;
+      justify-content: center;
+      margin-top: 2rem;
+      opacity: 0;
+      animation: fadeUp .7s .65s forwards;
+    }
+    .chip {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      background: var(--fondo2);
+      border: 1px solid var(--borde);
+      border-radius: 999px;
+      padding: .4rem 1rem;
+      font-size: .85rem;
+      color: var(--texto);
+    }
+    .chip-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-azul  { background: var(--azul-c); }
+    .dot-verde { background: var(--verde-c); }
+    .dot-oro   { background: var(--oro); }
+
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .5rem;
+      color: var(--sub);
+      font-size: .75rem;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeUp .7s 1.2s forwards;
+    }
+    .scroll-arrow {
+      width: 24px; height: 24px;
+      border-right: 2px solid var(--sub);
+      border-bottom: 2px solid var(--sub);
+      transform: rotate(45deg);
+      animation: bounce 1.5s infinite;
+    }
+
+    /* ─── SECTION BASE ──────────────────────────────────────────── */
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1060px; margin-inline: auto; }
+    .section-label {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--azul-c);
+      font-weight: 600;
+      margin-bottom: .75rem;
+    }
+    .section-title {
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+    .section-desc {
+      color: var(--sub);
+      max-width: 680px;
+      font-size: 1.05rem;
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid var(--borde);
+      margin: 0;
+    }
+
+    /* ─── OBJETIVO ──────────────────────────────────────────────── */
+    .objetivo-box {
+      background: linear-gradient(135deg, rgba(26,107,181,.15), rgba(30,158,107,.1));
+      border: 1px solid rgba(42,133,216,.25);
+      border-radius: var(--r);
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .objetivo-box::before {
+      content: '';
+      position: absolute;
+      top: -60px; left: -60px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(42,133,216,.12), transparent 70%);
+    }
+    .objetivo-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, var(--azul), var(--azul-c));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.25rem;
+      font-size: 1.5rem;
+    }
+    .objetivo-box p {
+      font-size: 1.1rem;
+      line-height: 1.75;
+      color: var(--texto);
+      position: relative;
+      z-index: 1;
+    }
+    .objetivo-box strong { color: var(--azul-c); }
+
+    /* ─── CONCEPTOS ─────────────────────────────────────────────── */
+    #conceptos { background: var(--fondo2); }
+    .conceptos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+      margin-top: 3rem;
+    }
+    .concepto-card {
+      background: var(--fondo3);
+      border: 1px solid var(--borde);
+      border-radius: var(--r);
+      padding: 1.75rem;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      transition: transform .25s, border-color .25s, box-shadow .25s;
+    }
+    .concepto-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--azul-c);
+      box-shadow: 0 8px 32px rgba(42,133,216,.15);
+    }
+    .concepto-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 3px;
+      width: 100%;
+      background: var(--gradient-card, linear-gradient(90deg, var(--azul), var(--azul-c)));
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform .3s;
+    }
+    .concepto-card:hover::after { transform: scaleX(1); }
+    .concepto-num {
+      font-size: .72rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--sub);
+      margin-bottom: .6rem;
+    }
+    .concepto-card h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: .6rem;
+      color: var(--texto);
+    }
+    .concepto-card p {
+      font-size: .9rem;
+      color: var(--sub);
+      line-height: 1.6;
+    }
+    .concepto-emoji {
+      font-size: 2rem;
+      margin-bottom: .85rem;
+      display: block;
+    }
+
+    /* ─── TIMELINE ──────────────────────────────────────────────── */
+    .timeline { margin-top: 3rem; position: relative; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 28px; top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--azul-c), var(--verde-c));
+    }
+    .tl-item {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      position: relative;
+    }
+    .tl-dot {
+      width: 58px; height: 58px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      font-size: 1.3rem;
+      border: 2px solid var(--borde);
+      background: var(--fondo2);
+      position: relative;
+      z-index: 1;
+      transition: border-color .25s, background .25s;
+    }
+    .tl-item:hover .tl-dot {
+      border-color: var(--azul-c);
+      background: rgba(42,133,216,.1);
+    }
+    .tl-body {
+      flex: 1;
+      background: var(--fondo2);
+      border: 1px solid var(--borde);
+      border-radius: var(--r);
+      padding: 1.25rem 1.5rem;
+      transition: border-color .25s;
+    }
+    .tl-item:hover .tl-body { border-color: var(--azul-c); }
+    .tl-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: .35rem; }
+    .tl-body p  { font-size: .9rem; color: var(--sub); }
+    .tl-tag {
+      display: inline-block;
+      font-size: .72rem;
+      background: rgba(42,133,216,.15);
+      color: var(--azul-c);
+      border-radius: 4px;
+      padding: .15rem .5rem;
+      margin-bottom: .5rem;
+    }
+
+    /* ─── ENTREGABLE ─────────────────────────────────────────────── */
+    #entregable { background: var(--fondo2); }
+    .entregable-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-top: 3rem;
+      align-items: start;
+    }
+    @media (max-width: 760px) { .entregable-wrap { grid-template-columns: 1fr; } }
+
+    /* Mapa D3 */
+    .mapa-preview {
+      border-radius: var(--r);
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--borde);
+      background: #0d1520;
+      min-height: 340px;
+    }
+    .mapa-preview svg { display: block; width: 100%; height: 100%; }
+    #map-tooltip {
+      position: absolute;
+      background: rgba(13,17,23,.95);
+      border: 1px solid var(--borde);
+      border-radius: 8px;
+      padding: .55rem .9rem;
+      font-size: .82rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+      z-index: 20;
+      max-width: 200px;
+      backdrop-filter: blur(6px);
+    }
+    #map-tooltip strong { display: block; margin-bottom: .2rem; font-size: .85rem; }
+    #map-tooltip .tt-val { color: var(--azul-c); font-weight: 600; }
+    #map-tooltip .tt-rank { color: var(--sub); font-size: .78rem; margin-top: .15rem; }
+    .map-loading {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: .75rem; color: var(--sub); font-size: .88rem;
+    }
+    .map-spinner {
+      width: 28px; height: 28px;
+      border: 3px solid var(--borde);
+      border-top-color: var(--azul-c);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .map-legend {
+      position: absolute;
+      bottom: 10px; left: 10px;
+      background: rgba(13,17,23,.85);
+      border: 1px solid var(--borde);
+      border-radius: 8px;
+      padding: .6rem .8rem;
+      font-size: .72rem;
+      backdrop-filter: blur(4px);
+    }
+    .map-legend-title { color: var(--sub); margin-bottom: .45rem; letter-spacing: .05em; text-transform: uppercase; font-size: .68rem; }
+    .legend-row { display: flex; align-items: center; gap: .45rem; margin-bottom: .3rem; }
+    .legend-swatch { width: 14px; height: 14px; border-radius: 3px; flex-shrink: 0; }
+    .map-source {
+      position: absolute; bottom: 10px; right: 10px;
+      font-size: .65rem; color: var(--sub);
+      background: rgba(13,17,23,.75); padding: .25rem .5rem; border-radius: 4px;
+    }
+    .map-error {
+      position: absolute; inset: 0;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: .5rem; color: var(--sub); font-size: .85rem; text-align: center; padding: 1rem;
+    }
+
+    .entregable-info h3 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      line-height: 1.3;
+    }
+    .entregable-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin-top: 1.25rem;
+    }
+    .etag {
+      font-size: .8rem;
+      padding: .3rem .8rem;
+      border-radius: 6px;
+      border: 1px solid var(--borde);
+      color: var(--sub);
+    }
+    .etag.azul  { border-color: var(--azul);  color: var(--azul-c);  background: rgba(26,107,181,.1); }
+    .etag.verde { border-color: var(--verde);  color: var(--verde-c); background: rgba(30,158,107,.1); }
+    .etag.oro   { border-color: var(--oro);    color: var(--oro);     background: rgba(232,160,32,.1); }
+    .criterio-box {
+      background: var(--fondo3);
+      border: 1px solid var(--borde);
+      border-left: 3px solid var(--verde-c);
+      border-radius: var(--r);
+      padding: 1.25rem 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .criterio-box p { font-size: .9rem; color: var(--sub); line-height: 1.65; }
+    .pib-highlight {
+      display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1.25rem;
+    }
+    .pib-stat {
+      flex: 1; min-width: 110px;
+      background: var(--fondo3);
+      border: 1px solid var(--borde);
+      border-radius: 10px;
+      padding: .85rem 1rem;
+      text-align: center;
+    }
+    .pib-stat .pib-val { font-size: 1.2rem; font-weight: 800; color: var(--azul-c); }
+    .pib-stat .pib-lbl { font-size: .72rem; color: var(--sub); margin-top: .2rem; }
+
+    /* ─── BIBLIOGRAFÍA ──────────────────────────────────────────── */
+    .biblio-tabs {
+      display: flex;
+      gap: .5rem;
+      margin-top: 2.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      padding: .5rem 1.2rem;
+      border-radius: 8px;
+      border: 1px solid var(--borde);
+      background: transparent;
+      color: var(--sub);
+      font-size: .88rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .tab-btn.active, .tab-btn:hover {
+      background: var(--azul);
+      border-color: var(--azul);
+      color: #fff;
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .ref-list { list-style: none; }
+    .ref-item {
+      display: flex;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--borde);
+      align-items: flex-start;
+      transition: padding-left .2s;
+    }
+    .ref-item:hover { padding-left: .5rem; }
+    .ref-item:last-child { border-bottom: none; }
+    .ref-icon {
+      width: 38px; height: 38px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .ref-icon.teo { background: rgba(42,133,216,.15); }
+    .ref-icon.tec { background: rgba(30,158,107,.15); }
+    .ref-body { flex: 1; }
+    .ref-body strong { font-size: .95rem; display: block; margin-bottom: .2rem; }
+    .ref-body span { font-size: .83rem; color: var(--sub); }
+
+    /* ─── HERRAMIENTAS ──────────────────────────────────────────── */
+    .tools-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 2.5rem;
+    }
+    .tool-card {
+      display: flex;
+      align-items: center;
+      gap: .85rem;
+      background: var(--fondo2);
+      border: 1px solid var(--borde);
+      border-radius: var(--r);
+      padding: 1rem 1.4rem;
+      transition: border-color .25s, transform .2s;
+      flex: 1;
+      min-width: 200px;
+    }
+    .tool-card:hover {
+      border-color: var(--verde-c);
+      transform: translateY(-3px);
+    }
+    .tool-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--verde), var(--verde-c));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem;
+      flex-shrink: 0;
+    }
+    .tool-info strong { display: block; font-size: .95rem; }
+    .tool-info span { font-size: .82rem; color: var(--sub); }
+
+    /* ─── FOOTER ─────────────────────────────────────────────────── */
+    footer {
+      background: var(--fondo2);
+      border-top: 1px solid var(--borde);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      color: var(--sub);
+      font-size: .85rem;
+    }
+    footer strong { color: var(--texto); }
+
+    /* ─── NAV ────────────────────────────────────────────────────── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(13,17,23,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--borde);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem 2rem;
+    }
+    .nav-brand {
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--azul-c);
+      letter-spacing: .04em;
+    }
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: .82rem;
+      color: var(--sub);
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--texto); }
+    @media (max-width: 580px) { .nav-links { display: none; } }
+
+    /* ─── PROGRESS BAR ──────────────────────────────────────────── */
+    #progress {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--azul-c), var(--verde-c));
+      z-index: 200;
+      transition: width .1s;
+    }
+
+    /* ─── REVEAL ANIMATION ──────────────────────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity .6s, transform .6s;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── KEYFRAMES ─────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounce {
+      0%, 100% { transform: rotate(45deg) translateY(0); }
+      50%       { transform: rotate(45deg) translateY(6px); }
+    }
+    @keyframes pulse-ring {
+      0%   { transform: scale(1);   opacity: .6; }
+      100% { transform: scale(2.4); opacity: 0;  }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-8px); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PROGRESS BAR -->
+  <div id="progress"></div>
+
+  <!-- NAV -->
+  <nav>
+    <span class="nav-brand">M1 · Fundamentos SIG</span>
+    <ul class="nav-links">
+      <li><a href="#objetivo">Objetivo</a></li>
+      <li><a href="#conceptos">Conceptos</a></li>
+      <li><a href="#sesion">Sesión</a></li>
+      <li><a href="#entregable">Entregable</a></li>
+      <li><a href="#biblio">Bibliografía</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <canvas class="hero-canvas" id="heroCanvas"></canvas>
+    <div class="hero-content">
+      <div class="badge">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        Módulo 1 de 4 · Curso DGAPA 2026
+      </div>
+      <h1>Fundamentos SIG<br>y Geografía Económica</h1>
+      <p class="hero-sub">Aprende a ver la economía en el territorio. Domina los Sistemas de Información Geográfica como herramienta analítica y pedagógica.</p>
+      <div class="hero-chips">
+        <span class="chip"><span class="chip-dot dot-azul"></span> 6 horas</span>
+        <span class="chip"><span class="chip-dot dot-verde"></span> QGIS 3.28 LTR</span>
+        <span class="chip"><span class="chip-dot dot-oro"></span> Sin experiencia previa en SIG</span>
+        <span class="chip"><span class="chip-dot dot-azul"></span> Datos INEGI · CONAPO · OSM</span>
+      </div>
+    </div>
+    <div class="scroll-hint">
+      Explorar
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- OBJETIVO -->
+  <section id="objetivo">
+    <div class="container">
+      <p class="section-label reveal">Propósito del módulo</p>
+      <h2 class="section-title reveal">¿Qué vas a lograr?</h2>
+      <div class="objetivo-box reveal" style="margin-top:2rem;">
+        <div class="objetivo-icon">🎯</div>
+        <p>
+          Que el participante <strong>comprenda los conceptos fundamentales de los Sistemas de Información Geográfica</strong>
+          desde una perspectiva económica, <strong>configure correctamente su entorno de trabajo en QGIS</strong>
+          e importe y explore sus primeros <strong>datos geoespaciales socioeconómicos</strong>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- CONCEPTOS CLAVE -->
+  <section id="conceptos">
+    <div class="container">
+      <p class="section-label reveal">Lo que necesitas saber</p>
+      <h2 class="section-title reveal">Conceptos clave</h2>
+      <p class="section-desc reveal">Estos son los pilares teóricos y técnicos que construirás durante el módulo.</p>
+
+      <div class="conceptos-grid">
+
+        <div class="concepto-card reveal" style="--gradient-card: linear-gradient(90deg,#1a6bb5,#2a85d8)">
+          <span class="concepto-emoji">🗺️</span>
+          <p class="concepto-num">Concepto 01</p>
+          <h3>¿Qué es un SIG?</h3>
+          <p>Sistema para capturar, almacenar, manipular, analizar y visualizar datos geoespaciales. Piensa en él como una base de datos con coordenadas y capas de información.</p>
+        </div>
+
+        <div class="concepto-card reveal" style="--gradient-card: linear-gradient(90deg,#1e9e6b,#27c985)">
+          <span class="concepto-emoji">📐</span>
+          <p class="concepto-num">Concepto 02</p>
+          <h3>Datos vectoriales y raster</h3>
+          <p>Vectorial: puntos, líneas y polígonos (municipios, carreteras, ciudades). Raster: mallas de píxeles (imágenes satelitales, modelos de elevación).</p>
+        </div>
+
+        <div class="concepto-card reveal" style="--gradient-card: linear-gradient(90deg,#e8a020,#f0c040)">
+          <span class="concepto-emoji">🌐</span>
+          <p class="concepto-num">Concepto 03</p>
+          <h3>Sistemas de coordenadas</h3>
+          <p>CRS (Coordinate Reference System): define cómo se proyecta la Tierra en un plano. Para México usamos EPSG:4326 (geográfico) y EPSG:6372 (proyectado nacional).</p>
+        </div>
+
+        <div class="concepto-card reveal" style="--gradient-card: linear-gradient(90deg,#9b5de5,#c77dff)">
+          <span class="concepto-emoji">📊</span>
+          <p class="concepto-num">Concepto 04</p>
+          <h3>Geografía económica</h3>
+          <p>Los fenómenos económicos ocurren en territorios concretos. Krugman demostró que la localización explica patrones de especialización, comercio y desigualdad regional.</p>
+        </div>
+
+        <div class="concepto-card reveal" style="--gradient-card: linear-gradient(90deg,#ef4444,#f97316)">
+          <span class="concepto-emoji">🔗</span>
+          <p class="concepto-num">Concepto 05</p>
+          <h3>Capas y atributos</h3>
+          <p>Cada capa vectorial contiene una tabla de atributos: el puente entre datos estadísticos (PIB, marginación, población) y su representación geográfica.</p>
+        </div>
+
+        <div class="concepto-card reveal" style="--gradient-card: linear-gradient(90deg,#0ea5e9,#38bdf8)">
+          <span class="concepto-emoji">🏛️</span>
+          <p class="concepto-num">Concepto 06</p>
+          <h3>Fuentes de datos oficiales</h3>
+          <p>Marco Geoestadístico Nacional (INEGI), CONAPO, OpenStreetMap. El ecosistema de datos abiertos que usaremos durante todo el curso.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- SESIÓN / CRONOGRAMA -->
+  <section id="sesion">
+    <div class="container">
+      <p class="section-label reveal">Estructura de la sesión</p>
+      <h2 class="section-title reveal">¿Cómo está organizado el módulo?</h2>
+      <p class="section-desc reveal">El módulo cubre 6 horas distribuidas en dos sesiones de 3 horas (martes y jueves).</p>
+
+      <div class="timeline reveal">
+
+        <div class="tl-item">
+          <div class="tl-dot">🧠</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 1 · Hora 1</span>
+            <h3>Fundamentos teóricos y perspectiva económica</h3>
+            <p>Nueva Geografía Económica (Krugman), por qué los SIG son herramienta esencial en economía regional, repaso de conceptos de territorialidad y desarrollo.</p>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot">⚙️</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 1 · Hora 2</span>
+            <h3>Instalación y configuración de QGIS</h3>
+            <p>Descarga de QGIS 3.28 LTR, instalación de plugins básicos (QuickMapServices, QuickOSM), tour por la interfaz y configuración del CRS de proyecto.</p>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot">📂</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 1 · Hora 3</span>
+            <h3>Importación del Marco Geoestadístico Nacional</h3>
+            <p>Carga de shapefile estatal del MGN-INEGI, exploración de la tabla de atributos, distinción entre capas vectoriales y raster.</p>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot">🔗</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 2 · Hora 4</span>
+            <h3>Join tabular: uniendo estadísticas al mapa</h3>
+            <p>Descarga de PIB per cápita estatal (INEGI), limpieza básica en Excel/LibreOffice, join por clave CVEGEO. Este es el puente entre tablas y geografía.</p>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot">🎨</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 2 · Hora 5</span>
+            <h3>Simbología graduada y diseño cartográfico</h3>
+            <p>Clasificación por cuantiles vs. Jenks, paleta de color secuencial, configuración de leyenda, escala gráfica, norte y fuente de datos.</p>
+          </div>
+        </div>
+
+        <div class="tl-item">
+          <div class="tl-dot">🖨️</div>
+          <div class="tl-body">
+            <span class="tl-tag">Sesión 2 · Hora 6</span>
+            <h3>Layout y exportación del mapa final</h3>
+            <p>Compositor de impresión de QGIS, configuración del lienzo (tamaño carta/A4), exportación en PDF y PNG con resolución adecuada para presentación académica.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- HERRAMIENTAS -->
+  <section id="herramientas" style="padding-top: 4rem; padding-bottom: 4rem;">
+    <div class="container">
+      <p class="section-label reveal">Software del módulo</p>
+      <h2 class="section-title reveal">Herramientas que usarás</h2>
+      <div class="tools-grid">
+        <div class="tool-card reveal">
+          <div class="tool-icon">🟢</div>
+          <div class="tool-info">
+            <strong>QGIS 3.28 LTR</strong>
+            <span>Plataforma principal · Gratuito</span>
+          </div>
+        </div>
+        <div class="tool-card reveal">
+          <div class="tool-icon">🌍</div>
+          <div class="tool-info">
+            <strong>QuickMapServices</strong>
+            <span>Plugin · Mapas base en línea</span>
+          </div>
+        </div>
+        <div class="tool-card reveal">
+          <div class="tool-icon">🏢</div>
+          <div class="tool-info">
+            <strong>MGN-INEGI</strong>
+            <span>Marco Geoestadístico Nacional</span>
+          </div>
+        </div>
+        <div class="tool-card reveal">
+          <div class="tool-icon">🗺️</div>
+          <div class="tool-info">
+            <strong>QuickOSM</strong>
+            <span>Plugin · OpenStreetMap integrado</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ENTREGABLE -->
+  <section id="entregable">
+    <div class="container">
+      <p class="section-label reveal">Producto esperado</p>
+      <h2 class="section-title reveal">Tu entregable del módulo</h2>
+
+      <div class="entregable-wrap">
+
+        <!-- MAPA D3 -->
+        <div class="mapa-preview reveal" id="mapa-container">
+          <div class="map-loading" id="map-loading">
+            <div class="map-spinner"></div>
+            Cargando mapa de México…
+          </div>
+          <div class="map-error" id="map-error">
+            ⚠️ No se pudo cargar el mapa.<br>Verifica tu conexión a internet.
+          </div>
+          <svg id="mexico-map"></svg>
+          <div id="map-tooltip">
+            <strong id="tt-name"></strong>
+            <div class="tt-val" id="tt-val"></div>
+            <div class="tt-rank" id="tt-rank"></div>
+          </div>
+          <div class="map-legend" id="map-legend" style="display:none;">
+            <div class="map-legend-title">PIB per cápita (miles MXN)</div>
+          </div>
+          <div class="map-source">Fuente: INEGI · datos aprox. 2022</div>
+        </div>
+
+        <!-- INFO -->
+        <div class="entregable-info reveal">
+          <h3>Mapa coroplético de PIB per cápita estatal con layout profesional</h3>
+          <p style="color:var(--sub); font-size:.93rem; line-height:1.7;">
+            Producirás tu primer mapa cartográfico de México mostrando la distribución del PIB per cápita
+            estatal, con todos los elementos de un documento cartográfico profesional. Pasa el cursor sobre
+            los estados para explorar los datos.
+          </p>
+
+          <div class="pib-highlight">
+            <div class="pib-stat">
+              <div class="pib-val">$310k</div>
+              <div class="pib-lbl">Mayor: Campeche</div>
+            </div>
+            <div class="pib-stat">
+              <div class="pib-val">$42k</div>
+              <div class="pib-lbl">Menor: Chiapas</div>
+            </div>
+            <div class="pib-stat">
+              <div class="pib-val">7.4×</div>
+              <div class="pib-lbl">Brecha máx/mín</div>
+            </div>
+          </div>
+
+          <div class="entregable-tags">
+            <span class="etag azul">Formato PDF / PNG</span>
+            <span class="etag verde">Clasificación Jenks</span>
+            <span class="etag oro">Layout profesional</span>
+            <span class="etag">Leyenda completa</span>
+            <span class="etag">Escala gráfica</span>
+            <span class="etag">Norte y fuente</span>
+          </div>
+          <div class="criterio-box">
+            <p><strong style="color:var(--verde-c)">Criterio de evaluación:</strong><br>
+            Instalar, configurar y operar QGIS 3.28 para cargar, gestionar y visualizar datos geoespaciales vectoriales y raster de fuentes oficiales (INEGI, CONAPO, OSM).</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- BIBLIOGRAFÍA -->
+  <section id="biblio">
+    <div class="container">
+      <p class="section-label reveal">Lecturas del módulo</p>
+      <h2 class="section-title reveal">Bibliografía</h2>
+
+      <div class="biblio-tabs reveal">
+        <button class="tab-btn active" onclick="switchTab('consultada', this)">Consultada</button>
+        <button class="tab-btn" onclick="switchTab('sugerida', this)">Sugerida</button>
+      </div>
+
+      <div id="consultada" class="tab-panel active">
+        <ul class="ref-list">
+          <li class="ref-item">
+            <div class="ref-icon teo">📖</div>
+            <div class="ref-body">
+              <strong>Krugman, P. (1991). Increasing Returns and Economic Geography.</strong>
+              <span>Journal of Political Economy, 99(3), 483–499. · Teórica</span>
+            </div>
+          </li>
+          <li class="ref-item">
+            <div class="ref-icon teo">📖</div>
+            <div class="ref-body">
+              <strong>Fujita, M., Krugman, P. & Venables, A. (2001). The Spatial Economy: Cities, Regions and International Trade.</strong>
+              <span>MIT Press. · Teórica</span>
+            </div>
+          </li>
+          <li class="ref-item">
+            <div class="ref-icon teo">📖</div>
+            <div class="ref-body">
+              <strong>Capello, R. (2015). Regional Economics.</strong>
+              <span>Routledge. Capítulos 1–3. · Teórica</span>
+            </div>
+          </li>
+          <li class="ref-item">
+            <div class="ref-icon tec">💻</div>
+            <div class="ref-body">
+              <strong>Longley, P., Goodchild, M., Maguire, D. & Rhind, D. (2015). Geographic Information Science and Systems.</strong>
+              <span>Wiley, 4ª ed. Capítulos 1–3. · Técnica</span>
+            </div>
+          </li>
+          <li class="ref-item">
+            <div class="ref-icon tec">💻</div>
+            <div class="ref-body">
+              <strong>QGIS Development Team (2024). QGIS User Guide. Release 3.28.</strong>
+              <span>docs.qgis.org · Técnica</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div id="sugerida" class="tab-panel">
+        <ul class="ref-list">
+          <li class="ref-item">
+            <div class="ref-icon teo">📖</div>
+            <div class="ref-body">
+              <strong>Krugman, P. (1991). Increasing Returns and Economic Geography.</strong>
+              <span>Journal of Political Economy, 99(3), 483–499. · Teórica — lectura esencial de arranque</span>
+            </div>
+          </li>
+          <li class="ref-item">
+            <div class="ref-icon tec">💻</div>
+            <div class="ref-body">
+              <strong>Longley, P., Goodchild, M., Maguire, D. & Rhind, D. (2015). Geographic Information Science and Systems.</strong>
+              <span>Wiley, 4ª ed. Capítulos 1–3. · Técnica — referencia de consulta permanente</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p><strong>Curso DGAPA 2026</strong> · Análisis Espacial para el Desarrollo Regional con QGIS</p>
+    <p style="margin-top:.4rem;">Módulo 1 de 4 · 6 horas · Carlos David García Hernández · Facultad de Economía UNAM</p>
+  </footer>
+
+  <script>
+    // ── PROGRESS BAR ──────────────────────────────────────────────
+    const bar = document.getElementById('progress');
+    window.addEventListener('scroll', () => {
+      const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+      bar.style.width = pct + '%';
+    });
+
+    // ── SCROLL REVEAL ─────────────────────────────────────────────
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 60);
+        }
+      });
+    }, { threshold: 0.12 });
+    reveals.forEach(el => observer.observe(el));
+
+    // ── TABS ──────────────────────────────────────────────────────
+    function switchTab(id, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    // ── MAPA COROPLÉTICO D3 ──────────────────────────────────────
+    (function() {
+      // PIB per cápita estatal (miles de pesos, aprox. 2022, INEGI)
+      const PIB = {
+        'Aguascalientes': 130, 'Baja California': 125, 'Baja California Sur': 155,
+        'Campeche': 310, 'Chiapas': 42, 'Chihuahua': 145, 'Ciudad de México': 285,
+        'Coahuila de Zaragoza': 150, 'Colima': 115, 'Durango': 85,
+        'Guanajuato': 80, 'Guerrero': 50, 'Hidalgo': 58, 'Jalisco': 120,
+        'México': 88, 'Michoacán de Ocampo': 62, 'Morelos': 90, 'Nayarit': 95,
+        'Nuevo León': 200, 'Oaxaca': 48, 'Puebla': 68, 'Querétaro': 165,
+        'Quintana Roo': 100, 'San Luis Potosí': 82, 'Sinaloa': 105,
+        'Sonora': 140, 'Tabasco': 65, 'Tamaulipas': 135, 'Tlaxcala': 72,
+        'Veracruz de Ignacio de la Llave': 70, 'Yucatán': 87, 'Zacatecas': 78
+      };
+
+      // Fallback name matching (algunos GeoJSON usan nombres distintos)
+      function lookupPIB(rawName) {
+        if (PIB[rawName] !== undefined) return PIB[rawName];
+        const lower = rawName.toLowerCase();
+        for (const [k, v] of Object.entries(PIB)) {
+          if (k.toLowerCase().includes(lower) || lower.includes(k.toLowerCase().split(' ')[0])) return v;
+        }
+        return null;
+      }
+
+      const vals = Object.values(PIB).sort(d3.ascending);
+      const ranked = Object.entries(PIB).sort((a,b) => b[1]-a[1]);
+
+      // Escala de color: 5 clases cuantiles (azul oscuro → verde → dorado)
+      const colorScale = d3.scaleQuantile()
+        .domain(vals)
+        .range(['#1a3560','#1e5c91','#2a85d8','#1e9e6b','#e8a020']);
+
+      const labels = ['Muy bajo','Bajo','Medio','Alto','Muy alto'];
+      const colors = ['#1a3560','#1e5c91','#2a85d8','#1e9e6b','#e8a020'];
+
+      // Leyenda
+      const legend = document.getElementById('map-legend');
+      colors.forEach((c, i) => {
+        const row = document.createElement('div');
+        row.className = 'legend-row';
+        row.innerHTML = `<span class="legend-swatch" style="background:${c}"></span><span style="color:#8b949e">${labels[i]}</span>`;
+        legend.appendChild(row);
+      });
+
+      const container = document.getElementById('mapa-container');
+      const svgEl     = document.getElementById('mexico-map');
+      const tooltip   = document.getElementById('map-tooltip');
+      const loading   = document.getElementById('map-loading');
+      const errDiv    = document.getElementById('map-error');
+
+      // Ajuste de tamaño
+      function getSize() {
+        return { w: container.clientWidth, h: Math.max(container.clientHeight, 340) };
+      }
+
+      const GEO_URL = 'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/mexico.geojson';
+
+      fetch(GEO_URL)
+        .then(r => { if (!r.ok) throw new Error('fetch'); return r.json(); })
+        .then(geo => {
+          loading.style.display = 'none';
+          legend.style.display  = 'block';
+
+          const { w, h } = getSize();
+
+          const projection = d3.geoMercator()
+            .fitExtent([[12, 12], [w - 12, h - 12]], geo);
+          const path = d3.geoPath().projection(projection);
+
+          const svg = d3.select('#mexico-map')
+            .attr('viewBox', `0 0 ${w} ${h}`)
+            .attr('preserveAspectRatio', 'xMidYMid meet');
+
+          // Drop shadow filter
+          const defs = svg.append('defs');
+          const filter = defs.append('filter').attr('id', 'shadow');
+          filter.append('feDropShadow')
+            .attr('dx', 0).attr('dy', 1)
+            .attr('stdDeviation', 2)
+            .attr('flood-color', 'rgba(0,0,0,.4)');
+
+          const g = svg.append('g');
+
+          g.selectAll('path')
+            .data(geo.features)
+            .enter().append('path')
+              .attr('d', path)
+              .attr('fill', d => {
+                const v = lookupPIB(d.properties.name || d.properties.NAME || '');
+                return v !== null ? colorScale(v) : '#1c2230';
+              })
+              .attr('stroke', '#0d1117')
+              .attr('stroke-width', 0.7)
+              .attr('filter', 'url(#shadow)')
+              .style('cursor', 'pointer')
+              .on('mouseover', function(event, d) {
+                const name = d.properties.name || d.properties.NAME || '';
+                const v    = lookupPIB(name);
+                const rank = v !== null ? ranked.findIndex(([k]) => lookupPIB(k) === v && k.startsWith(name.split(' ')[0])) + 1 : null;
+
+                d3.select(this)
+                  .raise()
+                  .attr('stroke', '#ffffff')
+                  .attr('stroke-width', 1.8);
+
+                document.getElementById('tt-name').textContent = name || 'Estado';
+                document.getElementById('tt-val').textContent  = v !== null ? `PIB pc ≈ $${v},000 MXN` : 'Sin dato';
+                document.getElementById('tt-rank').textContent = rank && rank > 0 ? `Posición: #${rank} de 32` : '';
+                tooltip.style.opacity = '1';
+              })
+              .on('mousemove', function(event) {
+                const rect = container.getBoundingClientRect();
+                let tx = event.clientX - rect.left + 14;
+                let ty = event.clientY - rect.top  - 14;
+                if (tx + 200 > rect.width)  tx = tx - 220;
+                if (ty + 80  > rect.height) ty = ty - 90;
+                tooltip.style.left = tx + 'px';
+                tooltip.style.top  = ty + 'px';
+              })
+              .on('mouseout', function() {
+                d3.select(this)
+                  .attr('stroke', '#0d1117')
+                  .attr('stroke-width', 0.7);
+                tooltip.style.opacity = '0';
+              });
+
+          // Zoom suave
+          const zoom = d3.zoom()
+            .scaleExtent([1, 6])
+            .on('zoom', e => g.attr('transform', e.transform));
+          svg.call(zoom);
+        })
+        .catch(() => {
+          loading.style.display = 'none';
+          errDiv.style.display  = 'flex';
+        });
+    })();
+
+    // ── HERO CANVAS (partículas tipo mapa) ───────────────────────
+    const canvas = document.getElementById('heroCanvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H, pts;
+
+    function resize() {
+      const hero = canvas.parentElement;
+      W = canvas.width  = hero.offsetWidth;
+      H = canvas.height = hero.offsetHeight;
+      init();
+    }
+
+    function init() {
+      pts = Array.from({ length: 70 }, () => ({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.8 + .4,
+        vx: (Math.random() - .5) * .25,
+        vy: (Math.random() - .5) * .25,
+        hue: Math.random() > .5 ? '#2a85d8' : '#27c985',
+      }));
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      // Gradient background
+      const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H) * .7);
+      grad.addColorStop(0, 'rgba(26,107,181,.07)');
+      grad.addColorStop(1, 'rgba(13,17,23,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Lines between close points
+      for (let i = 0; i < pts.length; i++) {
+        for (let j = i + 1; j < pts.length; j++) {
+          const dx = pts[i].x - pts[j].x, dy = pts[i].y - pts[j].y;
+          const d = Math.sqrt(dx*dx + dy*dy);
+          if (d < 100) {
+            ctx.beginPath();
+            ctx.moveTo(pts[i].x, pts[i].y);
+            ctx.lineTo(pts[j].x, pts[j].y);
+            ctx.strokeStyle = `rgba(42,133,216,${.12 * (1 - d/100)})`;
+            ctx.lineWidth = .8;
+            ctx.stroke();
+          }
+        }
+      }
+      // Points
+      pts.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.hue + '99';
+        ctx.fill();
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0 || p.x > W) p.vx *= -1;
+        if (p.y < 0 || p.y > H) p.vy *= -1;
+      });
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    draw();
+  </script>
+
+</body>
+</html>
