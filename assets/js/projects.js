@@ -7,6 +7,7 @@ export const PROJECTS = [
       Four progressive modules: GIS fundamentals, socioeconomic thematic cartography, geoprocessing with ORS Tools and isochrones, and spatial correlation with Moran's Index and LISA.
     `,
     image: "assets/img/proj/PortadaCursoUNAM.png",
+    imageHeight: "270px",  /* 75% de 360px */
     tags: ["QGIS", "ORS Tools", "GeoDa"],
     demo: "curso-qgis/index.html",
     demoLabel: "Web",

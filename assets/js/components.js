@@ -39,7 +39,7 @@ export function card(project){
   descP.textContent = (project.desc ?? "").trim();
 
   return el("article",{class:"card"},[
-    project.image ? el("img",{class:"cover", src: project.image, alt:`Portada del proyecto: ${project.title}`}) : null,
+    project.image ? el("img",{class:"cover", src: project.image, alt:`Portada del proyecto: ${project.title}`, ...(project.imageHeight ? {style:`height:${project.imageHeight}`} : {})}) : null,
     el("div",{class:"card-inner"},[
       el("h3",{},project.title),
       descP,
