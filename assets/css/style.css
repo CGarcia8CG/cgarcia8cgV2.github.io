@@ -250,9 +250,6 @@ main.container > section + section{
   object-fit: cover;
   object-position: top center;
 }
-#proyectos .card:first-child .cover{
-  height: calc(var(--proj-cover-h) * 0.9);  /* 10% menos solo en tarjeta QGIS */
-}
 #proyectos .card-inner{ padding: 18px 18px 20px; }
 #proyectos .card h3{ font-size: var(--proj-title); }
 #proyectos .card:hover{
