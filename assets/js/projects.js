@@ -6,12 +6,8 @@ export const PROJECTS = [
       Interactive course for UNAM instructors (DGAPA 2026) on spatial analysis applied to regional development.\n
       Four progressive modules: GIS fundamentals, socioeconomic thematic cartography, geoprocessing with ORS Tools and isochrones, and spatial correlation with Moran's Index and LISA.
     `,
-<<<<<<< HEAD
     image: "assets/img/proj/PortadaCursoUNAM.png",
     imageHeight: "270px",  /* 75% de 360px */
-=======
-    image: "assets/img/proj/Portada cursoUNAM.png",
->>>>>>> parent of 361a618 (Cambios descriptivos en la tarjeta del curso UNAM)
     tags: ["QGIS", "ORS Tools", "GeoDa"],
     demo: "curso-qgis/index.html",
     demoLabel: "Web",
@@ -247,10 +243,4 @@ export const TEACHING = [
   {role:"Técnicas de Análisis Espacial con Datos Geo-Referenciados", when:"Curso"},
   {role:"Fairness en IA aplicada a becas", when:"Charla"}
 ];
-export const PROFILE = {
-  user: "CGarcia8CG",
-  linkedin: "https://www.linkedin.com/in/cgarcia8cg/",
-  cv: "#",
-  avatar: "assets/img/cropped_carlos.jpg"
-};
- 
+export c
