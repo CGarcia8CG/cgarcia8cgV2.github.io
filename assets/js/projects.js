@@ -3,8 +3,8 @@ export const PROJECTS = [
   {
     title: "Análisis Espacial para el Desarrollo Regional con QGIS",
     desc: `
-      Curso interactivo para docentes de la UNAM (DGAPA 2026) sobre análisis espacial aplicado al desarrollo regional.\n
-      Cuatro módulos progresivos: fundamentos SIG, cartografía temática socioeconómica, geoprocesamiento con ORS Tools e isócronas, y correlación espacial con el índice de Moran y LISA.\n
+      Interactive course for UNAM instructors (DGAPA 2026) on spatial analysis applied to regional development.\n
+      Four progressive modules: GIS fundamentals, socioeconomic thematic cartography, geoprocessing with ORS Tools and isochrones, and spatial correlation with Moran's Index and LISA.
     `,
     image: "assets/img/proj/PortadaCursoUNAM.png",
     tags: ["QGIS", "ORS Tools", "GeoDa"],
@@ -248,3 +248,4 @@ export const PROFILE = {
   cv: "#",
   avatar: "assets/img/cropped_carlos.jpg"
 };
+ 

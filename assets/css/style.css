@@ -233,8 +233,8 @@ main.container > section + section{
 
 /* ===== Proyectos más grandes ===== */
 :root{
-  --proj-cover-h: 360px;   /* alto de la imagen (antes ~160px) */
-  --proj-min-h:  440px;    /* alto mínimo de la tarjeta */
+  --proj-cover-h: 180px;   /* alto de la imagen (antes ~160px) */
+  --proj-min-h:  320px;    /* alto mínimo de la tarjeta */
   --proj-title:  18px;     /* tamaño del título dentro de la card */
 }
 
