@@ -7,8 +7,10 @@ export const PROJECTS = [
       Cuatro módulos progresivos: fundamentos SIG, cartografía temática socioeconómica, geoprocesamiento con ORS Tools e isócronas, y correlación espacial con el índice de Moran y LISA.\n
       Material 100% web con mapas D3.js interactivos.
     `,
+    image: "assets/img/proj/curso-qgis.png",
     tags: ["QGIS", "D3.js", "Análisis Espacial", "UNAM", "ORS Tools"],
     demo: "curso-qgis/index.html",
+    demoLabel: "Web",
   },
   {
     title: "Mexico City Metro Network",

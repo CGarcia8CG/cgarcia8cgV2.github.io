@@ -46,7 +46,7 @@ export function card(project){
       el("div",{class:"tags"}, (project.tags ?? []).map(tag)),
       el("div",{class:"links"},[
         project.github ? pill("GitHub", project.github) : null,
-        project.demo ? pill("Demo", project.demo) : null
+        project.demo ? pill(project.demoLabel ?? "Demo", project.demo) : null
       ])
     ])
   ]);
