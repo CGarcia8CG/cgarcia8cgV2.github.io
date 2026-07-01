@@ -6,7 +6,7 @@ export const PROJECTS = [
       Curso interactivo para docentes de la UNAM (DGAPA 2026) sobre análisis espacial aplicado al desarrollo regional.\n
       Cuatro módulos progresivos: fundamentos SIG, cartografía temática socioeconómica, geoprocesamiento con ORS Tools e isócronas, y correlación espacial con el índice de Moran y LISA.\n
     `,
-    image: "assets/img/proj/Portada cursoUNAM.png",
+    image: "assets/img/proj/PortadaCursoUNAM.png",
     tags: ["QGIS", "ORS Tools", "GeoDa"],
     demo: "curso-qgis/index.html",
     demoLabel: "Web",
