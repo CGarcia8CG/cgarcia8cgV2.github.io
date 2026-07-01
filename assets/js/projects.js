@@ -243,4 +243,9 @@ export const TEACHING = [
   {role:"Técnicas de Análisis Espacial con Datos Geo-Referenciados", when:"Curso"},
   {role:"Fairness en IA aplicada a becas", when:"Charla"}
 ];
-export c
+export const PROFILE = {
+  user: "CGarcia8CG",
+  linkedin: "https://www.linkedin.com/in/cgarcia8cg/",
+  cv: "#",
+  avatar: "assets/img/cropped_carlos.jpg"
+};
